@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { api, downloadDepartmentPdf } from "./api";
+import { api, downloadDepartmentPdf, fetchDepartmentPdfBlob } from "./api";
 
 const MAIN_TABS = {
   ORDER_LISTING: "Order Listing",
@@ -70,6 +70,53 @@ function getDefaultActivePrintOption(row) {
   });
   // The first candidate becomes the row's active print option.
   return sorted[0].key;
+}
+
+function cleanupBlobUrl(url) {
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 60_000);
+}
+
+function rowHasNoPrintableOption(order, selectedDepartment) {
+  return (
+    !canDownload(order[selectedDepartment.statusField]) ||
+    !Boolean(order[selectedDepartment.pdfField])
+  );
+}
+
+async function openPrintDialogFromPdfBlob(pdfBlob, popup) {
+  const blobUrl = URL.createObjectURL(pdfBlob);
+  cleanupBlobUrl(blobUrl);
+
+  popup.location.replace(blobUrl);
+  // Browser PDF viewers can differ on load events, so we keep a fallback timer.
+  popup.onload = () => {
+    try {
+      popup.focus();
+      popup.print();
+    } catch (_error) {
+      // no-op: fallback timer handles cases where onload callback is skipped
+    }
+  };
+  setTimeout(() => {
+    try {
+      popup.focus();
+      popup.print();
+    } catch (_error) {
+      // no-op
+    }
+  }, 1200);
+}
+
+function openPrintWindow() {
+  const popup = window.open("", "_blank");
+  if (!popup) {
+    throw new Error("Pop-up blocked. Please allow pop-ups and try again.");
+  }
+  popup.document.write("<p style='font-family:Arial'>Preparing print preview...</p>");
+  popup.document.close();
+  return popup;
 }
 
 function OrdersTable({
@@ -302,31 +349,27 @@ function App() {
       return;
     }
 
-    const assignedPrinter = printers.find(
-      (printer) =>
-        printer.assigned_department === selectedDepartment.backendDepartment &&
-        Boolean(printer.is_active) &&
-        String(printer.status || "").toLowerCase() === "online"
-    );
-    if (!assignedPrinter) {
+    if (rowHasNoPrintableOption(order, selectedDepartment)) {
       setPrintStateByOrder((previous) => ({
         ...previous,
         [orderId]: {
           loading: false,
-          error: `No active online printer assigned for ${selectedDepartment.label}.`,
+          error: `No printable ${selectedDepartment.label} PDF available.`,
           success: "",
         },
       }));
       return;
     }
 
-    const pdfPath = order[selectedDepartment.pdfField];
-    if (!pdfPath) {
+    let popup = null;
+    try {
+      popup = openPrintWindow();
+    } catch (error) {
       setPrintStateByOrder((previous) => ({
         ...previous,
         [orderId]: {
           loading: false,
-          error: `No ${selectedDepartment.label} PDF path available.`,
+          error: error.message,
           success: "",
         },
       }));
@@ -343,31 +386,27 @@ function App() {
     }));
 
     try {
-      // Only one explicitly selected department is sent to the print API.
-      await api.post("/api/print-job", {
-        order_id: orderId,
-        department: selectedDepartment.backendDepartment,
-        printer_id: assignedPrinter.printer_id,
-        pdf_path: pdfPath,
-      });
+      // Print is scoped to exactly one active department option for this row.
+      const pdfBlob = await fetchDepartmentPdfBlob(orderId, selectedDepartment.key);
+      await openPrintDialogFromPdfBlob(pdfBlob, popup);
       setPrintStateByOrder((previous) => ({
         ...previous,
         [orderId]: {
           loading: false,
           error: "",
-          success: `Queued ${selectedDepartment.label} print.`,
+          success: `Opened ${selectedDepartment.label} print dialog.`,
         },
       }));
-      await loadOrders();
     } catch (error) {
       setPrintStateByOrder((previous) => ({
         ...previous,
         [orderId]: {
           loading: false,
-          error: error.response?.data?.message || "Failed to queue print job.",
+          error: error.response?.data?.message || error.message || "Failed to open print dialog.",
           success: "",
         },
       }));
+      if (popup && !popup.closed) popup.close();
     }
   }
 

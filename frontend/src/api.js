@@ -6,6 +6,17 @@ export const api = axios.create({
   baseURL,
 });
 
+export function departmentPdfApiPath(orderId, department) {
+  return `/api/orders/${orderId}/department/${department}/download-pdf`;
+}
+
 export function downloadDepartmentPdf(orderId, department) {
-  return `${baseURL}/api/orders/${orderId}/department/${department}/download-pdf`;
+  return `${baseURL}${departmentPdfApiPath(orderId, department)}`;
+}
+
+export async function fetchDepartmentPdfBlob(orderId, department) {
+  const response = await api.get(departmentPdfApiPath(orderId, department), {
+    responseType: "blob",
+  });
+  return response.data;
 }
