@@ -3,31 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Multi-Track Timer</title>
+  <title>Track Timer</title>
   <style>
     :root {
-      --bg: #0f1419;
-      --surface: #1a2332;
-      --surface-hover: #243044;
-      --text: #e6edf3;
-      --text-muted: #8b949e;
-      --accent: #58a6ff;
-      --accent-hover: #79b8ff;
-      --start: #3fb950;
-      --start-hover: #56d364;
-      --stop: #f85149;
-      --stop-hover: #ff7b72;
-      --reset: #d29922;
-      --reset-hover: #e3b341;
-      --lap: #a371f7;
-      --lap-hover: #bc8cff;
-      --fastest-bg: rgba(63, 185, 80, 0.2);
-      --fastest-border: #3fb950;
-      --slowest-bg: rgba(248, 81, 73, 0.2);
-      --slowest-border: #f85149;
-      --radius: 12px;
-      --radius-sm: 8px;
-      --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      --bg: #0b1220;
+      --panel: #131c2e;
+      --panel-2: #1a2640;
+      --text: #eef3ff;
+      --muted: #a8b2cc;
+      --accent: #66b2ff;
+      --start: #22c55e;
+      --stop: #ef4444;
+      --track: #8b5cf6;
+      --reset: #f59e0b;
+      --fastest: #22c55e;
+      --slowest: #ef4444;
+      --ring: #93c5fd;
+      --border: rgba(255, 255, 255, 0.12);
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      --radius: 14px;
     }
 
     * {
@@ -37,369 +31,402 @@
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: var(--font-sans);
-      background: var(--bg);
+      font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+      background: radial-gradient(circle at top, #13203a 0%, var(--bg) 60%);
       color: var(--text);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 1.5rem;
+      padding: 1rem;
+      display: grid;
+      place-items: center;
+    }
+
+    .timer-card {
+      width: min(720px, 100%);
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.25rem;
     }
 
     h1 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      margin: 0 0 1.5rem 0;
+      margin: 0 0 0.25rem;
+      font-size: clamp(1.2rem, 2.8vw, 1.6rem);
+      font-weight: 700;
       letter-spacing: 0.02em;
     }
 
-    .timer-display {
-      font-variant-numeric: tabular-nums;
-      font-size: clamp(3rem, 12vw, 5rem);
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      color: var(--text);
-      margin-bottom: 2rem;
-      padding: 1rem 1.5rem;
-      background: var(--surface);
-      border-radius: var(--radius);
-      min-width: 280px;
-      text-align: center;
-      border: 1px solid rgba(255, 255, 255, 0.06);
+    .subtitle {
+      margin: 0 0 1rem;
+      color: var(--muted);
+      font-size: 0.95rem;
     }
 
-    .timer-display .ms {
-      font-size: 0.45em;
-      font-weight: 500;
-      color: var(--text-muted);
-      margin-left: 0.05em;
+    .display {
+      margin: 0;
+      font-variant-numeric: tabular-nums;
+      font-size: clamp(2.6rem, 10vw, 5rem);
+      font-weight: 800;
+      text-align: center;
+      line-height: 1.05;
+      padding: 0.8rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) - 4px);
+      background: rgba(0, 0, 0, 0.22);
+      letter-spacing: 0.03em;
     }
 
     .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      justify-content: center;
-      margin-bottom: 2rem;
+      margin-top: 1rem;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.6rem;
     }
 
-    .controls button {
-      font-family: inherit;
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 0.72rem 0.6rem;
+      color: #fff;
       font-size: 0.95rem;
-      font-weight: 600;
-      padding: 0.75rem 1.25rem;
-      border: none;
-      border-radius: var(--radius-sm);
+      font-weight: 700;
       cursor: pointer;
-      transition: background 0.15s, transform 0.1s;
+      transition: transform 0.08s ease, filter 0.15s ease, opacity 0.2s ease;
     }
 
-    .controls button:active {
-      transform: scale(0.98);
+    button:hover:enabled {
+      filter: brightness(1.08);
     }
 
-    .controls button:disabled {
+    button:active:enabled {
+      transform: translateY(1px) scale(0.99);
+    }
+
+    button:focus-visible {
+      outline: 3px solid var(--ring);
+      outline-offset: 2px;
+    }
+
+    button:disabled {
       opacity: 0.5;
       cursor: not-allowed;
-      transform: none;
     }
 
-    .btn-start {
-      background: var(--start);
-      color: #fff;
+    #startBtn { background: var(--start); }
+    #stopBtn { background: var(--stop); }
+    #trackBtn { background: var(--track); }
+    #resetBtn { background: var(--reset); }
+
+    .tracks-header {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.5rem;
     }
 
-    .btn-start:hover:not(:disabled) {
-      background: var(--start-hover);
-    }
-
-    .btn-stop {
-      background: var(--stop);
-      color: #fff;
-    }
-
-    .btn-stop:hover:not(:disabled) {
-      background: var(--stop-hover);
-    }
-
-    .btn-reset {
-      background: var(--reset);
-      color: #fff;
-    }
-
-    .btn-reset:hover:not(:disabled) {
-      background: var(--reset-hover);
-    }
-
-    .btn-lap {
-      background: var(--lap);
-      color: #fff;
-    }
-
-    .btn-lap:hover:not(:disabled) {
-      background: var(--lap-hover);
-    }
-
-    .tracks-section {
-      width: 100%;
-      max-width: 480px;
-    }
-
-    .tracks-section h2 {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      margin: 0 0 0.75rem 0;
-    }
-
-    .tracks-list {
-      list-style: none;
+    .tracks-header h2 {
       margin: 0;
-      padding: 0;
-      background: var(--surface);
-      border-radius: var(--radius);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      max-height: 320px;
-      overflow-y: auto;
+      font-size: 1.05rem;
     }
 
-    .tracks-list:empty::after {
-      content: 'No tracks recorded yet. Start the timer and tap Record Lap.';
-      display: block;
-      padding: 2rem 1.5rem;
-      text-align: center;
-      color: var(--text-muted);
+    #trackCount {
+      color: var(--muted);
       font-size: 0.9rem;
     }
 
+    #tracksList {
+      margin: 0.7rem 0 0;
+      padding: 0;
+      list-style: none;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      max-height: min(48vh, 420px);
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 1.1rem;
+    }
+
     .track-item {
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.5rem 1rem;
       align-items: center;
-      justify-content: space-between;
-      padding: 0.85rem 1.25rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 0.78rem 0.9rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       font-variant-numeric: tabular-nums;
-      transition: background 0.15s;
     }
 
     .track-item:last-child {
       border-bottom: none;
     }
 
-    .track-item.fastest {
-      background: var(--fastest-bg);
-      border-left: 4px solid var(--fastest-border);
-    }
-
-    .track-item.slowest {
-      background: var(--slowest-bg);
-      border-left: 4px solid var(--slowest-border);
-    }
-
-    .track-item.fastest.slowest {
-      border-left-color: var(--text-muted);
-    }
-
     .track-label {
-      font-weight: 600;
-      color: var(--text);
+      font-weight: 700;
     }
 
     .track-time {
-      font-size: 1.1rem;
-      font-weight: 600;
+      font-weight: 800;
       color: var(--accent);
+      font-size: 1.05rem;
     }
 
-    .track-item.fastest .track-time {
-      color: var(--fastest-border);
+    .badges {
+      display: flex;
+      gap: 0.35rem;
+      grid-column: 1 / -1;
+      flex-wrap: wrap;
     }
 
-    .track-item.slowest .track-time {
-      color: var(--slowest-border);
+    .badge {
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
     }
 
-    @media (max-width: 480px) {
-      body {
+    .track-item.fastest {
+      background: rgba(34, 197, 94, 0.16);
+      border-left: 4px solid var(--fastest);
+      padding-left: 0.66rem;
+    }
+
+    .track-item.slowest {
+      box-shadow: inset 0 0 0 999px rgba(239, 68, 68, 0.12);
+    }
+
+    .badge-fastest {
+      background: rgba(34, 197, 94, 0.18);
+      color: #b8facc;
+      border: 1px solid rgba(34, 197, 94, 0.45);
+    }
+
+    .badge-slowest {
+      background: rgba(239, 68, 68, 0.18);
+      color: #ffd0d0;
+      border: 1px solid rgba(239, 68, 68, 0.45);
+    }
+
+    @media (max-width: 620px) {
+      .timer-card {
         padding: 1rem;
       }
 
-      .timer-display {
-        min-width: 260px;
-        font-size: 2.75rem;
-      }
-
       .controls {
-        gap: 0.5rem;
-      }
-
-      .controls button {
-        padding: 0.65rem 1rem;
-        font-size: 0.9rem;
-      }
-
-      .track-item {
-        padding: 0.7rem 1rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
   </style>
 </head>
 <body>
-  <h1>Multi-Track Timer</h1>
-  <div class="timer-display" id="timerDisplay" aria-live="polite">
-    <span id="timerMain">00:00</span><span class="ms" id="timerMs">.00</span>
-  </div>
-  <div class="controls">
-    <button type="button" class="btn-start" id="btnStart">Start</button>
-    <button type="button" class="btn-stop" id="btnStop" disabled>Stop</button>
-    <button type="button" class="btn-reset" id="btnReset">Reset</button>
-    <button type="button" class="btn-lap" id="btnLap" disabled>Record Lap</button>
-  </div>
-  <section class="tracks-section">
-    <h2>Recorded Tracks</h2>
-    <ul class="tracks-list" id="tracksList"></ul>
-  </section>
+  <main class="timer-card">
+    <h1>Track Timer</h1>
+    <p class="subtitle">Start the timer, record each segment as a track, then compare fastest and slowest.</p>
+
+    <p id="timeDisplay" class="display" aria-live="polite">00:00.00</p>
+
+    <div class="controls">
+      <button id="startBtn" type="button">Start</button>
+      <button id="stopBtn" type="button" disabled>Stop</button>
+      <button id="trackBtn" type="button" disabled>Track</button>
+      <button id="resetBtn" type="button">Reset</button>
+    </div>
+
+    <section aria-labelledby="tracksTitle">
+      <div class="tracks-header">
+        <h2 id="tracksTitle">Recorded Tracks</h2>
+        <span id="trackCount">0 tracks</span>
+      </div>
+      <ul id="tracksList">
+        <li class="empty">No tracks yet. Press Start and then Track to record segments.</li>
+      </ul>
+    </section>
+  </main>
 
   <script>
     (function () {
-      'use strict';
+      "use strict";
 
       var state = {
         running: false,
-        startTime: 0,
-        elapsedMs: 0,
-        laps: [],
-        animationId: null
+        startStamp: 0,
+        elapsedBeforeStart: 0,
+        tracks: [],
+        lastTrackElapsed: 0,
+        rafId: 0
       };
 
-      var timerMain = document.getElementById('timerMain');
-      var timerMs = document.getElementById('timerMs');
-      var btnStart = document.getElementById('btnStart');
-      var btnStop = document.getElementById('btnStop');
-      var btnReset = document.getElementById('btnReset');
-      var btnLap = document.getElementById('btnLap');
-      var tracksList = document.getElementById('tracksList');
+      var timeDisplay = document.getElementById("timeDisplay");
+      var startBtn = document.getElementById("startBtn");
+      var stopBtn = document.getElementById("stopBtn");
+      var trackBtn = document.getElementById("trackBtn");
+      var resetBtn = document.getElementById("resetBtn");
+      var tracksList = document.getElementById("tracksList");
+      var trackCount = document.getElementById("trackCount");
+      var lastRenderedCentisecond = -1;
 
-      function pad2(n) {
-        return (n < 10 ? '0' : '') + n;
+      function pad2(value) {
+        return String(value).padStart(2, "0");
       }
 
-      function formatMs(ms) {
-        if (ms < 0 || !Number.isFinite(ms)) ms = 0;
-        var totalSeconds = Math.floor(ms / 1000);
-        var minutes = Math.floor(totalSeconds / 60);
-        var seconds = totalSeconds % 60;
-        var centis = Math.floor((ms % 1000) / 10);
-        return pad2(minutes) + ':' + pad2(seconds) + '.' + pad2(centis);
+      function formatTime(ms) {
+        var safeMs = Math.max(0, Number.isFinite(ms) ? ms : 0);
+        var minutes = Math.floor(safeMs / 60000);
+        var seconds = Math.floor((safeMs % 60000) / 1000);
+        var centiseconds = Math.floor((safeMs % 1000) / 10);
+        return pad2(minutes) + ":" + pad2(seconds) + "." + pad2(centiseconds);
       }
 
-      function getCurrentElapsedMs() {
-        if (!state.running) return state.elapsedMs;
-        return state.elapsedMs + (Date.now() - state.startTime);
+      function elapsedMs() {
+        if (!state.running) {
+          return state.elapsedBeforeStart;
+        }
+        return state.elapsedBeforeStart + (performance.now() - state.startStamp);
       }
 
-      function getLapsTotalMs() {
-        return state.laps.reduce(function (sum, lap) { return sum + lap.timeMs; }, 0);
+      function renderDisplay(force) {
+        var ms = elapsedMs();
+        var currentCentisecond = Math.floor(ms / 10);
+        if (!force && currentCentisecond === lastRenderedCentisecond) {
+          return;
+        }
+        lastRenderedCentisecond = currentCentisecond;
+        timeDisplay.textContent = formatTime(ms);
       }
 
-      function updateDisplay() {
-        var ms = getCurrentElapsedMs();
-        var totalSeconds = Math.floor(ms / 1000);
-        var minutes = Math.floor(totalSeconds / 60);
-        var seconds = totalSeconds % 60;
-        var centis = Math.floor((ms % 1000) / 10);
-        timerMain.textContent = pad2(minutes) + ':' + pad2(seconds);
-        timerMs.textContent = '.' + pad2(centis);
+      function syncControls() {
+        startBtn.disabled = state.running;
+        stopBtn.disabled = !state.running;
+        trackBtn.disabled = !state.running;
       }
 
       function tick() {
-        updateDisplay();
-        state.animationId = requestAnimationFrame(tick);
+        renderDisplay(false);
+        state.rafId = requestAnimationFrame(tick);
       }
 
       function startTimer() {
-        if (state.running) return;
+        if (state.running) {
+          return;
+        }
         state.running = true;
-        state.startTime = Date.now();
-        btnStart.disabled = true;
-        btnStop.disabled = false;
-        btnLap.disabled = false;
-        state.animationId = requestAnimationFrame(tick);
+        state.startStamp = performance.now();
+        syncControls();
+        state.rafId = requestAnimationFrame(tick);
       }
 
       function stopTimer() {
-        if (!state.running) return;
+        if (!state.running) {
+          return;
+        }
+        state.elapsedBeforeStart = elapsedMs();
         state.running = false;
-        state.elapsedMs = getCurrentElapsedMs();
-        cancelAnimationFrame(state.animationId);
-        state.animationId = null;
-        btnStart.disabled = false;
-        btnStop.disabled = true;
-        btnLap.disabled = true;
-        updateDisplay();
+        cancelAnimationFrame(state.rafId);
+        state.rafId = 0;
+        syncControls();
+        renderDisplay(true);
       }
 
       function resetTimer() {
         stopTimer();
-        state.elapsedMs = 0;
-        state.laps = [];
-        updateDisplay();
+        state.elapsedBeforeStart = 0;
+        state.lastTrackElapsed = 0;
+        state.tracks = [];
+        lastRenderedCentisecond = -1;
+        renderDisplay(true);
         renderTracks();
-        btnStart.disabled = false;
-        btnStop.disabled = true;
-        btnLap.disabled = true;
       }
 
-      function recordLap() {
-        if (!state.running) return;
-        var currentTotal = getCurrentElapsedMs();
-        var previousTotal = getLapsTotalMs();
-        var segmentMs = currentTotal - previousTotal;
-        if (segmentMs < 0) segmentMs = 0;
-        state.laps.push({
-          label: 'Track ' + (state.laps.length + 1),
-          timeMs: segmentMs
-        });
+      function recordTrack() {
+        if (!state.running) {
+          return;
+        }
+
+        var totalNow = elapsedMs();
+        var segment = Math.max(0, totalNow - state.lastTrackElapsed);
+        state.lastTrackElapsed = totalNow;
+        state.tracks.push(segment);
         renderTracks();
+      }
+
+      function createBadge(className, text) {
+        var badge = document.createElement("span");
+        badge.className = "badge " + className;
+        badge.textContent = text;
+        return badge;
       }
 
       function renderTracks() {
-        tracksList.innerHTML = '';
-        var laps = state.laps;
-        if (laps.length === 0) return;
+        var tracks = state.tracks;
+        tracksList.innerHTML = "";
+        trackCount.textContent = tracks.length + (tracks.length === 1 ? " track" : " tracks");
 
-        var minMs = laps[0].timeMs;
-        var maxMs = laps[0].timeMs;
-        for (var i = 1; i < laps.length; i++) {
-          if (laps[i].timeMs < minMs) minMs = laps[i].timeMs;
-          if (laps[i].timeMs > maxMs) maxMs = laps[i].timeMs;
+        if (tracks.length === 0) {
+          var emptyItem = document.createElement("li");
+          emptyItem.className = "empty";
+          emptyItem.textContent = "No tracks yet. Press Start and then Track to record segments.";
+          tracksList.appendChild(emptyItem);
+          return;
         }
-        var isTie = minMs === maxMs;
 
-        laps.forEach(function (lap, index) {
-          var li = document.createElement('li');
-          li.className = 'track-item';
-          if (!isTie && lap.timeMs === minMs) li.classList.add('fastest');
-          if (!isTie && lap.timeMs === maxMs) li.classList.add('slowest');
-          var label = document.createElement('span');
-          label.className = 'track-label';
-          label.textContent = lap.label;
-          var time = document.createElement('span');
-          time.className = 'track-time';
-          time.textContent = formatMs(lap.timeMs);
+        var fastest = Math.min.apply(null, tracks);
+        var slowest = Math.max.apply(null, tracks);
+
+        tracks.forEach(function (trackMs, index) {
+          var li = document.createElement("li");
+          li.className = "track-item";
+
+          var isFastest = trackMs === fastest;
+          var isSlowest = trackMs === slowest;
+
+          if (isFastest) {
+            li.classList.add("fastest");
+          }
+          if (isSlowest) {
+            li.classList.add("slowest");
+          }
+
+          var label = document.createElement("span");
+          label.className = "track-label";
+          label.textContent = "Track " + (index + 1);
+
+          var time = document.createElement("span");
+          time.className = "track-time";
+          time.textContent = formatTime(trackMs);
+
           li.appendChild(label);
           li.appendChild(time);
+
+          if (isFastest || isSlowest) {
+            var badges = document.createElement("div");
+            badges.className = "badges";
+            if (isFastest) {
+              badges.appendChild(createBadge("badge-fastest", "Fastest"));
+            }
+            if (isSlowest) {
+              badges.appendChild(createBadge("badge-slowest", "Slowest"));
+            }
+            li.appendChild(badges);
+          }
+
           tracksList.appendChild(li);
         });
       }
 
-      btnStart.addEventListener('click', startTimer);
-      btnStop.addEventListener('click', stopTimer);
-      btnReset.addEventListener('click', resetTimer);
-      btnLap.addEventListener('click', recordLap);
+      startBtn.addEventListener("click", startTimer);
+      stopBtn.addEventListener("click", stopTimer);
+      trackBtn.addEventListener("click", recordTrack);
+      resetBtn.addEventListener("click", resetTimer);
 
-      updateDisplay();
+      syncControls();
+      renderDisplay(true);
+      renderTracks();
     })();
   </script>
 </body>
