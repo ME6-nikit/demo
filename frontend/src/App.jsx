@@ -13,9 +13,21 @@ const OMA_TABS = {
 };
 
 const DEPARTMENTS = [
-  { label: "DM", statusField: "dm_status", key: "dm" },
-  { label: "Confectionery", statusField: "confectionery_status", key: "confectionery" },
-  { label: "Design", statusField: "design_status", key: "design" },
+  { label: "DM", backendDepartment: "DM", statusField: "dm_status", pdfField: "dm_pdf_path", key: "dm" },
+  {
+    label: "Confectionery",
+    backendDepartment: "Confectionery",
+    statusField: "confectionery_status",
+    pdfField: "confectionery_pdf_path",
+    key: "confectionery",
+  },
+  {
+    label: "Design",
+    backendDepartment: "Design",
+    statusField: "design_status",
+    pdfField: "design_pdf_path",
+    key: "design",
+  },
 ];
 
 function canDownload(status) {
@@ -36,7 +48,41 @@ function StatusTag({ status }) {
   return <span className={cls}>{status || "-"}</span>;
 }
 
-function OrdersTable({ rows, showIgnore, onIgnore, onTimeline }) {
+function getPrintableDepartments(row) {
+  return DEPARTMENTS.filter(
+    (department) => row[department.statusField] !== "NA" && Boolean(row[department.pdfField])
+  );
+}
+
+function getDefaultActivePrintOption(row) {
+  const priority = {
+    "In-Progress": 0,
+    Pending: 1,
+    Failure: 2,
+    Success: 3,
+  };
+  const candidates = getPrintableDepartments(row);
+  if (!candidates.length) return "";
+  const sorted = [...candidates].sort((left, right) => {
+    const leftPriority = priority[row[left.statusField]] ?? 99;
+    const rightPriority = priority[row[right.statusField]] ?? 99;
+    return leftPriority - rightPriority;
+  });
+  // The first candidate becomes the row's active print option.
+  return sorted[0].key;
+}
+
+function OrdersTable({
+  rows,
+  showIgnore,
+  showPrint,
+  activePrintOptionByOrder,
+  printStateByOrder,
+  onChangeActivePrintOption,
+  onPrint,
+  onIgnore,
+  onTimeline,
+}) {
   return (
     <table className="oma-table">
       <thead>
@@ -52,6 +98,7 @@ function OrdersTable({ rows, showIgnore, onIgnore, onTimeline }) {
           <th>Design Download</th>
           <th>Last Updated</th>
           <th>Timeline</th>
+          {showPrint && <th>Print</th>}
           {showIgnore && <th>Ignore Order</th>}
         </tr>
       </thead>
@@ -87,6 +134,48 @@ function OrdersTable({ rows, showIgnore, onIgnore, onTimeline }) {
                 View
               </button>
             </td>
+            {showPrint && (
+              <td>
+                <div className="print-controls">
+                  <select
+                    value={activePrintOptionByOrder[row.order_id] || ""}
+                    onChange={(event) =>
+                      onChangeActivePrintOption(row.order_id, event.target.value)
+                    }
+                    className="small-select"
+                  >
+                    {getPrintableDepartments(row).length === 0 && (
+                      <option value="">No active option</option>
+                    )}
+                    {getPrintableDepartments(row).map((department) => (
+                      <option key={department.key} value={department.key}>
+                        {department.label}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    className="small-btn"
+                    disabled={
+                      !activePrintOptionByOrder[row.order_id] ||
+                      printStateByOrder[row.order_id]?.loading
+                    }
+                    onClick={() => onPrint(row)}
+                  >
+                    {printStateByOrder[row.order_id]?.loading ? "Printing..." : "Print"}
+                  </button>
+                  {printStateByOrder[row.order_id]?.error && (
+                    <div className="status-text error">
+                      {printStateByOrder[row.order_id].error}
+                    </div>
+                  )}
+                  {printStateByOrder[row.order_id]?.success && (
+                    <div className="status-text success">
+                      {printStateByOrder[row.order_id].success}
+                    </div>
+                  )}
+                </div>
+              </td>
+            )}
             {showIgnore && (
               <td>
                 <button className="small-btn warn" onClick={() => onIgnore(row.order_id)}>
@@ -110,6 +199,8 @@ function App() {
   const [timelineOrderId, setTimelineOrderId] = useState("");
   const [printers, setPrinters] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [activePrintOptionByOrder, setActivePrintOptionByOrder] = useState({});
+  const [printStateByOrder, setPrintStateByOrder] = useState({});
 
   const departmentAssignments = useMemo(() => {
     return {
@@ -128,7 +219,22 @@ function App() {
         api.get("/api/orders", { params: { actionRequired: false } }),
       ]);
       setActionRequiredOrders(actionRes.data.orders || []);
-      setAllOrders(allRes.data.orders || []);
+      const allOrderRows = allRes.data.orders || [];
+      setAllOrders(allOrderRows);
+      setActivePrintOptionByOrder((previous) => {
+        const next = { ...previous };
+        for (const order of allOrderRows) {
+          const orderId = order.order_id;
+          const currentOption = next[orderId];
+          const isCurrentOptionStillValid = getPrintableDepartments(order).some(
+            (department) => department.key === currentOption
+          );
+          if (!isCurrentOptionStillValid) {
+            next[orderId] = getDefaultActivePrintOption(order);
+          }
+        }
+        return next;
+      });
     } finally {
       setLoading(false);
     }
@@ -162,6 +268,107 @@ function App() {
       assigned_department: department || null,
     });
     await loadPrinters();
+  }
+
+  function handleChangeActivePrintOption(orderId, option) {
+    setActivePrintOptionByOrder((previous) => ({
+      ...previous,
+      [orderId]: option,
+    }));
+    setPrintStateByOrder((previous) => ({
+      ...previous,
+      [orderId]: {
+        loading: false,
+        error: "",
+        success: "",
+      },
+    }));
+  }
+
+  async function handlePrintOrder(order) {
+    const orderId = order.order_id;
+    const selectedOption = activePrintOptionByOrder[orderId];
+    const selectedDepartment = DEPARTMENTS.find((department) => department.key === selectedOption);
+
+    if (!selectedDepartment) {
+      setPrintStateByOrder((previous) => ({
+        ...previous,
+        [orderId]: {
+          loading: false,
+          error: "No active print option selected for this order.",
+          success: "",
+        },
+      }));
+      return;
+    }
+
+    const assignedPrinter = printers.find(
+      (printer) =>
+        printer.assigned_department === selectedDepartment.backendDepartment &&
+        Boolean(printer.is_active) &&
+        String(printer.status || "").toLowerCase() === "online"
+    );
+    if (!assignedPrinter) {
+      setPrintStateByOrder((previous) => ({
+        ...previous,
+        [orderId]: {
+          loading: false,
+          error: `No active online printer assigned for ${selectedDepartment.label}.`,
+          success: "",
+        },
+      }));
+      return;
+    }
+
+    const pdfPath = order[selectedDepartment.pdfField];
+    if (!pdfPath) {
+      setPrintStateByOrder((previous) => ({
+        ...previous,
+        [orderId]: {
+          loading: false,
+          error: `No ${selectedDepartment.label} PDF path available.`,
+          success: "",
+        },
+      }));
+      return;
+    }
+
+    setPrintStateByOrder((previous) => ({
+      ...previous,
+      [orderId]: {
+        loading: true,
+        error: "",
+        success: "",
+      },
+    }));
+
+    try {
+      // Only one explicitly selected department is sent to the print API.
+      await api.post("/api/print-job", {
+        order_id: orderId,
+        department: selectedDepartment.backendDepartment,
+        printer_id: assignedPrinter.printer_id,
+        pdf_path: pdfPath,
+      });
+      setPrintStateByOrder((previous) => ({
+        ...previous,
+        [orderId]: {
+          loading: false,
+          error: "",
+          success: `Queued ${selectedDepartment.label} print.`,
+        },
+      }));
+      await loadOrders();
+    } catch (error) {
+      setPrintStateByOrder((previous) => ({
+        ...previous,
+        [orderId]: {
+          loading: false,
+          error: error.response?.data?.message || "Failed to queue print job.",
+          success: "",
+        },
+      }));
+    }
   }
 
   useEffect(() => {
@@ -210,12 +417,26 @@ function App() {
             <OrdersTable
               rows={actionRequiredOrders}
               showIgnore
+              showPrint={false}
+              activePrintOptionByOrder={{}}
+              printStateByOrder={{}}
+              onChangeActivePrintOption={() => {}}
+              onPrint={() => {}}
               onIgnore={handleIgnore}
               onTimeline={handleTimeline}
             />
           )}
           {!loading && omaTab === OMA_TABS.ALL_ORDERS && (
-            <OrdersTable rows={allOrders} showIgnore={false} onTimeline={handleTimeline} />
+            <OrdersTable
+              rows={allOrders}
+              showIgnore={false}
+              showPrint
+              activePrintOptionByOrder={activePrintOptionByOrder}
+              printStateByOrder={printStateByOrder}
+              onChangeActivePrintOption={handleChangeActivePrintOption}
+              onPrint={handlePrintOrder}
+              onTimeline={handleTimeline}
+            />
           )}
         </section>
       )}

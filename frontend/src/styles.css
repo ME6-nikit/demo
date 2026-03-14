@@ -89,6 +89,11 @@ body {
   display: inline-block;
 }
 
+.small-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .link-btn.disabled {
   pointer-events: none;
   opacity: 0.4;
@@ -97,4 +102,30 @@ body {
 .small-btn.warn {
   border-color: #dc2626;
   color: #dc2626;
+}
+
+.print-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 170px;
+}
+
+.small-select {
+  border: 1px solid #c6c9d1;
+  border-radius: 4px;
+  background: white;
+  padding: 4px 6px;
+}
+
+.status-text {
+  font-size: 11px;
+}
+
+.status-text.error {
+  color: #dc2626;
+}
+
+.status-text.success {
+  color: #059669;
 }
