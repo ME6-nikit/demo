@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OMA Desktop Agent</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      header {
+        padding: 12px;
+        border-bottom: 1px solid #334155;
+      }
+      #logs {
+        margin: 0;
+        padding: 12px;
+        list-style: none;
+        max-height: calc(100vh - 70px);
+        overflow: auto;
+      }
+      li {
+        font-family: monospace;
+        padding: 3px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h3>OMA Electron Desktop Agent</h3>
+    </header>
+    <ul id="logs"></ul>
+    <script>
+      const logsEl = document.getElementById("logs");
+      function addLine(line) {
+        const li = document.createElement("li");
+        li.textContent = line;
+        logsEl.prepend(li);
+      }
+      addLine("Agent UI initialized");
+      require("electron").ipcRenderer.on("log-line", (_event, line) => {
+        addLine(line);
+      });
+    </script>
+  </body>
+</html>
