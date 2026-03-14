@@ -1,0 +1,100 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f8f9fb;
+  color: #1b1d22;
+}
+
+.page {
+  padding: 20px;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tab {
+  border: 1px solid #c6c9d1;
+  background: white;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: #1f6feb;
+  color: #fff;
+}
+
+.panel {
+  margin-bottom: 16px;
+  background: white;
+  border: 1px solid #d8dbe4;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.oma-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.oma-table th,
+.oma-table td {
+  border: 1px solid #e2e5ee;
+  padding: 6px;
+  text-align: left;
+}
+
+.tag {
+  display: inline-block;
+  border-radius: 10px;
+  padding: 2px 8px;
+  color: white;
+  font-size: 12px;
+}
+
+.tag.pending {
+  background: #64748b;
+}
+
+.tag.progress {
+  background: #2563eb;
+}
+
+.tag.success {
+  background: #059669;
+}
+
+.tag.failure {
+  background: #dc2626;
+}
+
+.tag.na {
+  background: #6b7280;
+}
+
+.link-btn,
+.small-btn {
+  border: 1px solid #2563eb;
+  color: #2563eb;
+  background: white;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.link-btn.disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.small-btn.warn {
+  border-color: #dc2626;
+  color: #dc2626;
+}
