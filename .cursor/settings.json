@@ -1,0 +1,6 @@
+{
+    "agents": {
+      "enabled": true,
+      "storage": true
+    }
+  }
