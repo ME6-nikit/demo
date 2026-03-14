@@ -1,0 +1,38 @@
+{
+  "id": 900002,
+  "order_number": "OMA-1002",
+  "name": "#OMA-1002",
+  "source_name": "web",
+  "customer": {
+    "first_name": "Sana",
+    "last_name": "Mehta"
+  },
+  "note_attributes": [
+    {
+      "name": "Delivery Date",
+      "value": "2026-03-21"
+    },
+    {
+      "name": "Delivery Time",
+      "value": "10:00-10:30"
+    }
+  ],
+  "shipping_lines": [
+    {
+      "title": "Express Delivery"
+    }
+  ],
+  "line_items": [
+    {
+      "sku": "CK-REDVEL-2KG",
+      "title": "Red Velvet Designer Cake 2kg",
+      "quantity": 1,
+      "price": "2399.00",
+      "product_tags": [
+        "designer",
+        "fondant"
+      ]
+    }
+  ],
+  "tags": "ORDER-MANAGEMENT-AUTOMATION-DESIGNER-CAKE,OMA-TEST-DESIGNER"
+}

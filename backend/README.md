@@ -31,3 +31,26 @@ The server boots tables automatically at startup.
 - `PATCH /api/orders/:orderId/ignore`
 - `GET /api/orders/:orderId/timeline`
 - `GET /api/orders/:orderId/department/:department/download-pdf`
+
+## OMA dummy order + row data
+
+Use `backend/dummy-data/` for practical examples requested by QA/ops:
+
+- Shopify payloads:
+  - `shopify-order-default.json` (default rule, all departments)
+  - `shopify-order-designer-cake.json` (designer-cake rule, Design = `NA`)
+  - `shopify-order-customization-charge.json` (customization-charge rule)
+- MySQL seed rows:
+  - `oma-dummy-rows.sql` (Orders, Order Department Status, Order PDFs, Printers, Order Timeline)
+
+Quick run:
+
+```bash
+curl -X POST http://localhost:4000/api/webhooks/shopify/orders/create \
+  -H "Content-Type: application/json" \
+  --data @backend/dummy-data/shopify-order-default.json
+```
+
+```bash
+mysql -h 127.0.0.1 -u root -proot oma < backend/dummy-data/oma-dummy-rows.sql
+```

@@ -1,0 +1,46 @@
+{
+  "id": 900003,
+  "order_number": "OMA-1003",
+  "name": "#OMA-1003",
+  "source_name": "web",
+  "customer": {
+    "first_name": "Rohan",
+    "last_name": "Bedi"
+  },
+  "note_attributes": [
+    {
+      "name": "Delivery Date",
+      "value": "2026-03-22"
+    },
+    {
+      "name": "Delivery Time",
+      "value": "16:00-16:30"
+    }
+  ],
+  "shipping_lines": [
+    {
+      "title": "Standard Delivery"
+    }
+  ],
+  "line_items": [
+    {
+      "sku": "CK-BLACKFOREST-1.5KG",
+      "title": "Black Forest Cake 1.5kg",
+      "quantity": 1,
+      "price": "1599.00",
+      "product_tags": [
+        "classic"
+      ]
+    },
+    {
+      "sku": "ADD-CUSTOM-CHARGE",
+      "title": "Additional Customization Charges",
+      "quantity": 1,
+      "price": "300.00",
+      "product_tags": [
+        "customization"
+      ]
+    }
+  ],
+  "tags": "OMA-TEST-CUSTOMIZATION"
+}

@@ -1,0 +1,47 @@
+{
+  "id": 900001,
+  "order_number": "OMA-1001",
+  "name": "#OMA-1001",
+  "source_name": "web",
+  "customer": {
+    "first_name": "Aarav",
+    "last_name": "Kapoor"
+  },
+  "note_attributes": [
+    {
+      "name": "Delivery Date",
+      "value": "2026-03-20"
+    },
+    {
+      "name": "Delivery Time",
+      "value": "18:30-19:00"
+    }
+  ],
+  "shipping_lines": [
+    {
+      "title": "Standard Delivery"
+    }
+  ],
+  "line_items": [
+    {
+      "sku": "CK-CHOC-1KG",
+      "title": "Chocolate Truffle Cake 1kg",
+      "quantity": 1,
+      "price": "1299.00",
+      "product_tags": [
+        "birthday",
+        "chocolate"
+      ]
+    },
+    {
+      "sku": "ACC-CANDLES",
+      "title": "Birthday Candles Set",
+      "quantity": 1,
+      "price": "99.00",
+      "product_tags": [
+        "accessory"
+      ]
+    }
+  ],
+  "tags": "ONLINE,OMA-TEST-DEFAULT"
+}
