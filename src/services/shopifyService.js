@@ -123,6 +123,83 @@ async function processOrderWebhook(payload) {
   });
 }
 
+function mapSampleWebhookPayload(payload) {
+  const shopifyOrderId = payload.order_id || payload.id;
+  const orderNumber = payload.order_number || payload.name;
+
+  if (!shopifyOrderId || !orderNumber) {
+    throw new HttpError(400, "Sample payload requires order_id (or id) and order_number (or name)");
+  }
+
+  const customerName =
+    payload.customer_name ||
+    [payload.customer?.first_name, payload.customer?.last_name].filter(Boolean).join(" ").trim() ||
+    "Sample Customer";
+
+  return {
+    shopifyOrderId: String(shopifyOrderId),
+    orderNumber: String(orderNumber),
+    customerName,
+    orderDate: payload.order_date ? new Date(payload.order_date) : new Date(),
+    deliveryDate: payload.delivery_date || null,
+    deliveryTime: payload.delivery_time || null,
+    specificDeliveryTime: payload.specific_delivery_time || null,
+    shippingMethod: payload.shipping_method || null,
+    reserved: Boolean(payload.reserved),
+    rawPayload: payload,
+  };
+}
+
+async function processSampleOrderWebhook(payload) {
+  const normalizedOrder = mapSampleWebhookPayload(payload);
+  const allPendingStatusMap = {
+    dm: DEPARTMENT_STATUS.PENDING,
+    confectionery: DEPARTMENT_STATUS.PENDING,
+    design: DEPARTMENT_STATUS.PENDING,
+  };
+
+  return withTransaction(async (connection) => {
+    const persistedOrder = await orderRepository.upsertOrderFromShopify(normalizedOrder, connection);
+    await orderRepository.ensureOrderSubrecords(persistedOrder.id, connection);
+    await orderRepository.updateDepartmentStatuses(persistedOrder.id, allPendingStatusMap, connection);
+
+    await timelineService.logTimelineEvent(
+      {
+        orderId: persistedOrder.id,
+        eventType: "WEBHOOK_RECEIVED",
+        status: "SUCCESS",
+        message: `Sample webhook received for order ${normalizedOrder.orderNumber}`,
+        metadata: {
+          sampleWebhook: true,
+          shopifyOrderId: normalizedOrder.shopifyOrderId,
+        },
+      },
+      connection
+    );
+
+    await timelineService.logTimelineEvent(
+      {
+        orderId: persistedOrder.id,
+        eventType: "RULES_EVALUATED",
+        status: "SUCCESS",
+        message: "Sample webhook defaulted all departments to PENDING",
+        metadata: {
+          sampleWebhook: true,
+          requiredDepartments: [...DEPARTMENT_LIST],
+        },
+      },
+      connection
+    );
+
+    return {
+      internalOrderId: persistedOrder.id,
+      shopifyOrderId: normalizedOrder.shopifyOrderId,
+      orderNumber: normalizedOrder.orderNumber,
+    };
+  });
+}
+
 module.exports = {
   processOrderWebhook,
+  processSampleOrderWebhook,
 };

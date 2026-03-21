@@ -99,6 +99,62 @@ Status color mapping in API responses:
   - Generates department PDFs
   - Validates printers and auto-creates print jobs (configurable)
   - Logs timeline events
+- `POST /api/shopify/sample-order-webhook` (developer sample insert endpoint)
+  - Validates payload structure for minimal Shopify-like fields
+  - Keeps a placeholder HMAC validation hook (`x-shopify-hmac-sha256`)
+  - Inserts/updates `orders`, initializes `order_department_status`, and logs timeline
+
+### Sample Shopify Webhook Test
+
+Use this endpoint to quickly insert a sample order payload while developing locally.
+
+**Endpoint**
+
+```http
+POST /api/shopify/sample-order-webhook
+```
+
+**Sample payload**
+
+```json
+{
+  "order_id": "900100200",
+  "order_number": "OMA-1001",
+  "customer_name": "Jane Doe",
+  "delivery_date": "2026-03-25",
+  "delivery_time": "10:00-12:00",
+  "shipping_method": "Standard Delivery",
+  "reserved": false
+}
+```
+
+**cURL**
+
+```bash
+curl -X POST "http://localhost:3000/api/shopify/sample-order-webhook" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "order_id": "900100200",
+    "order_number": "OMA-1001",
+    "customer_name": "Jane Doe",
+    "delivery_date": "2026-03-25",
+    "delivery_time": "10:00-12:00",
+    "shipping_method": "Standard Delivery",
+    "reserved": false
+  }'
+```
+
+Expected success response shape:
+
+```json
+{
+  "success": true,
+  "order_id": "900100200",
+  "order_number": "OMA-1001",
+  "internal_order_id": 1,
+  "message": "Sample webhook processed"
+}
+```
 
 ### Orders
 

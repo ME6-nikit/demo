@@ -5,5 +5,10 @@ const router = express.Router();
 
 router.post("/order-created", express.raw({ type: "application/json" }), shopifyController.handleOrderCreatedWebhook);
 router.post("/order-webhook", express.raw({ type: "application/json" }), shopifyController.handleOrderCreatedWebhook);
+router.post(
+  "/sample-order-webhook",
+  express.raw({ type: "application/json" }),
+  shopifyController.handleSampleOrderWebhook
+);
 
 module.exports = router;
