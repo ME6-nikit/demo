@@ -1,6 +1,7 @@
 const env = require("../config/env");
 const { withTransaction } = require("../db/pool");
 const orderRepository = require("../repositories/orderRepository");
+const printJobRepository = require("../repositories/printJobRepository");
 const timelineService = require("./timelineService");
 const { mapShopifyOrderPayload } = require("../utils/shopifyOrderMapper");
 const { evaluateOrderRules } = require("./ruleEngineService");
@@ -41,6 +42,10 @@ function assignPdfPath(pdfMap, department, relativePath) {
 }
 
 async function processOrderWebhook(payload) {
+  return processOrderWebhookWithOptions(payload, {});
+}
+
+async function processOrderWebhookWithOptions(payload, options) {
   const normalizedOrder = mapShopifyOrderPayload(payload);
   if (!normalizedOrder.shopifyOrderId || !normalizedOrder.orderNumber) {
     throw new HttpError(400, "Invalid Shopify order payload");
@@ -115,7 +120,7 @@ async function processOrderWebhook(payload) {
       return persistedOrder.id;
     }
 
-    if (env.autoTriggerPrintJobs) {
+    if (env.autoTriggerPrintJobs || options.forceTriggerPrintJobs) {
       await printJobService.createJobsForEligibleDepartments(persistedOrder.id, connection);
     }
 
@@ -123,83 +128,128 @@ async function processOrderWebhook(payload) {
   });
 }
 
-function mapSampleWebhookPayload(payload) {
-  const shopifyOrderId = payload.order_id || payload.id;
-  const orderNumber = payload.order_number || payload.name;
-
-  if (!shopifyOrderId || !orderNumber) {
-    throw new HttpError(400, "Sample payload requires order_id (or id) and order_number (or name)");
+function toShopifyLikeTestPayload(payload) {
+  if (!payload || typeof payload !== "object") {
+    throw new HttpError(400, "Request payload must be a JSON object");
   }
 
-  const customerName =
-    payload.customer_name ||
-    [payload.customer?.first_name, payload.customer?.last_name].filter(Boolean).join(" ").trim() ||
-    "Sample Customer";
+  const normalized = {
+    ...payload,
+  };
+
+  if (!normalized.id && normalized.order_id) {
+    normalized.id = normalized.order_id;
+  }
+  if (!normalized.order_number && normalized.name) {
+    normalized.order_number = normalized.name;
+  }
+  if (!normalized.created_at) {
+    normalized.created_at = new Date().toISOString();
+  }
+  if (!Array.isArray(normalized.line_items)) {
+    normalized.line_items = [];
+  }
+
+  if (!normalized.customer && normalized.customer_name) {
+    const nameParts = String(normalized.customer_name).trim().split(/\s+/);
+    normalized.customer = {
+      first_name: nameParts.shift() || "Sample",
+      last_name: nameParts.join(" ") || "Customer",
+    };
+  }
+
+  if (!Array.isArray(normalized.note_attributes)) {
+    normalized.note_attributes = [];
+  }
+
+  const noteAttributePairs = [
+    ["delivery_date", normalized.delivery_date],
+    ["delivery_time", normalized.delivery_time],
+    ["specific_delivery_time", normalized.specific_delivery_time],
+    ["reserved", normalized.reserved !== undefined ? String(Boolean(normalized.reserved)) : undefined],
+  ].filter(([, value]) => value !== undefined && value !== null && value !== "");
+
+  for (const [name, value] of noteAttributePairs) {
+    const existing = normalized.note_attributes.find((item) => item?.name === name || item?.key === name);
+    if (!existing) {
+      normalized.note_attributes.push({
+        name,
+        value: String(value),
+      });
+    }
+  }
+
+  if (!Array.isArray(normalized.shipping_lines) || normalized.shipping_lines.length === 0) {
+    if (normalized.shipping_method || normalized.shipping_code) {
+      normalized.shipping_lines = [
+        {
+          title: normalized.shipping_method || normalized.shipping_code,
+          code: normalized.shipping_code || normalized.shipping_method,
+        },
+      ];
+    } else {
+      normalized.shipping_lines = [];
+    }
+  }
+
+  if (!normalized.id || !normalized.order_number) {
+    throw new HttpError(400, "Test payload requires id/order_id and order_number/name");
+  }
+
+  return normalized;
+}
+
+function requiredDepartmentsFromOrder(orderRow) {
+  const required = [];
+  if (orderRow.dm_status !== DEPARTMENT_STATUS.NA) {
+    required.push(DEPARTMENTS.DM);
+  }
+  if (orderRow.confectionery_status !== DEPARTMENT_STATUS.NA) {
+    required.push(DEPARTMENTS.CONFECTIONERY);
+  }
+  if (orderRow.design_status !== DEPARTMENT_STATUS.NA) {
+    required.push(DEPARTMENTS.DESIGN);
+  }
+  return required;
+}
+
+async function processTestOrderWebhook(payload) {
+  const normalizedPayload = toShopifyLikeTestPayload(payload);
+  const internalOrderId = await processOrderWebhookWithOptions(normalizedPayload, {
+    forceTriggerPrintJobs: true,
+  });
+
+  const order = await orderRepository.getOrderByInternalId(internalOrderId);
+  const printJobs = await printJobRepository.listJobsByOrderId(internalOrderId);
 
   return {
-    shopifyOrderId: String(shopifyOrderId),
-    orderNumber: String(orderNumber),
-    customerName,
-    orderDate: payload.order_date ? new Date(payload.order_date) : new Date(),
-    deliveryDate: payload.delivery_date || null,
-    deliveryTime: payload.delivery_time || null,
-    specificDeliveryTime: payload.specific_delivery_time || null,
-    shippingMethod: payload.shipping_method || null,
-    reserved: Boolean(payload.reserved),
-    rawPayload: payload,
+    internalOrderId,
+    shopifyOrderId: order.order_id,
+    orderNumber: order.order_number,
+    requiredDepartments: requiredDepartmentsFromOrder(order),
+    pdfPaths: {
+      dm: order.dm_pdf_path,
+      confectionery: order.confectionery_pdf_path,
+      design: order.design_pdf_path,
+    },
+    printJobs: printJobs.map((job) => ({
+      id: job.id,
+      department: job.department,
+      status: job.job_status,
+      printerId: job.printer_id,
+      machineId: job.machine_id,
+      pdfPath: job.pdf_path,
+      errorMessage: job.error_message,
+    })),
   };
 }
 
 async function processSampleOrderWebhook(payload) {
-  const normalizedOrder = mapSampleWebhookPayload(payload);
-  const allPendingStatusMap = {
-    dm: DEPARTMENT_STATUS.PENDING,
-    confectionery: DEPARTMENT_STATUS.PENDING,
-    design: DEPARTMENT_STATUS.PENDING,
-  };
-
-  return withTransaction(async (connection) => {
-    const persistedOrder = await orderRepository.upsertOrderFromShopify(normalizedOrder, connection);
-    await orderRepository.ensureOrderSubrecords(persistedOrder.id, connection);
-    await orderRepository.updateDepartmentStatuses(persistedOrder.id, allPendingStatusMap, connection);
-
-    await timelineService.logTimelineEvent(
-      {
-        orderId: persistedOrder.id,
-        eventType: "WEBHOOK_RECEIVED",
-        status: "SUCCESS",
-        message: `Sample webhook received for order ${normalizedOrder.orderNumber}`,
-        metadata: {
-          sampleWebhook: true,
-          shopifyOrderId: normalizedOrder.shopifyOrderId,
-        },
-      },
-      connection
-    );
-
-    await timelineService.logTimelineEvent(
-      {
-        orderId: persistedOrder.id,
-        eventType: "RULES_EVALUATED",
-        status: "SUCCESS",
-        message: "Sample webhook defaulted all departments to PENDING",
-        metadata: {
-          sampleWebhook: true,
-          requiredDepartments: [...DEPARTMENT_LIST],
-        },
-      },
-      connection
-    );
-
-    return {
-      internalOrderId: persistedOrder.id,
-      shopifyOrderId: normalizedOrder.shopifyOrderId,
-      orderNumber: normalizedOrder.orderNumber,
-    };
-  });
+  return processTestOrderWebhook(payload);
 }
 
 module.exports = {
   processOrderWebhook,
+  processTestOrderWebhook,
   processSampleOrderWebhook,
 };

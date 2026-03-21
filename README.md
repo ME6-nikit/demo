@@ -91,7 +91,7 @@ Status color mapping in API responses:
 
 ### Shopify webhook
 
-- `POST /api/shopify/order-webhook` (spec-compatible sample endpoint)
+- `POST /api/shopify/order-webhook` (Shopify-compatible endpoint)
 - `POST /api/shopify/webhook/order-created` (legacy alias)
   - Validates Shopify HMAC signature via `x-shopify-hmac-sha256`
   - Persists order + initializes statuses
@@ -99,62 +99,127 @@ Status color mapping in API responses:
   - Generates department PDFs
   - Validates printers and auto-creates print jobs (configurable)
   - Logs timeline events
-- `POST /api/shopify/sample-order-webhook` (developer sample insert endpoint)
-  - Validates payload structure for minimal Shopify-like fields
-  - Keeps a placeholder HMAC validation hook (`x-shopify-hmac-sha256`)
-  - Inserts/updates `orders`, initializes `order_department_status`, and logs timeline
+- `POST /api/shopify/sample-order-webhook` (developer-friendly alias for local testing)
+- `POST /api/shopify/test-order-webhook` (end-to-end local webhook-to-print test endpoint)
+  - Accepts Shopify-like order payloads
+  - Uses the same rule engine + status initialization as production webhook processing
+  - Generates department PDFs and stores paths in `order_pdfs`
+  - Triggers print jobs using printer validation and timeline logging flow
 
-### Sample Shopify Webhook Test
+### End-to-end Local Test: Webhook to Print
 
-Use this endpoint to quickly insert a sample order payload while developing locally.
+This flow lets you simulate a local Shopify webhook and drive order insertion, rules, PDF generation, and print-job creation end to end.
+
+#### 1) (Optional) Make sure printers are synced and assigned
+
+```bash
+curl -X POST "http://localhost:3000/api/printers/sync" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "machineId": "local-machine-1",
+    "printers": [
+      { "printerId": "printer-main", "printerName": "Main Thermal Printer", "status": "ONLINE", "isActive": true }
+    ]
+  }'
+```
+
+Assign the printer to each department (same printer is fine for local test):
+
+```bash
+curl -X POST "http://localhost:3000/api/printers/assignments" \
+  -H "Content-Type: application/json" \
+  -d '{ "department": "DM", "printerId": "printer-main", "machineId": "local-machine-1" }'
+```
+
+```bash
+curl -X POST "http://localhost:3000/api/printers/assignments" \
+  -H "Content-Type: application/json" \
+  -d '{ "department": "CONFECTIONERY", "printerId": "printer-main", "machineId": "local-machine-1" }'
+```
+
+```bash
+curl -X POST "http://localhost:3000/api/printers/assignments" \
+  -H "Content-Type: application/json" \
+  -d '{ "department": "DESIGN", "printerId": "printer-main", "machineId": "local-machine-1" }'
+```
+
+#### 2) Call the test webhook endpoint
 
 **Endpoint**
 
 ```http
-POST /api/shopify/sample-order-webhook
+POST /api/shopify/test-order-webhook
 ```
 
-**Sample payload**
+**Sample Shopify-like payload**
 
 ```json
 {
-  "order_id": "900100200",
-  "order_number": "OMA-1001",
-  "customer_name": "Jane Doe",
-  "delivery_date": "2026-03-25",
-  "delivery_time": "10:00-12:00",
-  "shipping_method": "Standard Delivery",
-  "reserved": false
+  "id": "900100201",
+  "order_number": "OMA-1002",
+  "created_at": "2026-03-21T10:30:00Z",
+  "customer": {
+    "first_name": "Jane",
+    "last_name": "Doe"
+  },
+  "shipping_lines": [
+    { "title": "Standard Delivery", "code": "STANDARD" }
+  ],
+  "note_attributes": [
+    { "name": "delivery_date", "value": "2026-03-25" },
+    { "name": "delivery_time", "value": "10:00-12:00" },
+    { "name": "specific_delivery_time", "value": "10:30 AM" },
+    { "name": "reserved", "value": "false" }
+  ],
+  "line_items": [
+    { "title": "Designer Cake - Anniversary" },
+    { "title": "Additional Customization Charges" }
+  ]
 }
 ```
 
 **cURL**
 
 ```bash
-curl -X POST "http://localhost:3000/api/shopify/sample-order-webhook" \
+curl -X POST "http://localhost:3000/api/shopify/test-order-webhook" \
   -H "Content-Type: application/json" \
   -d '{
-    "order_id": "900100200",
-    "order_number": "OMA-1001",
-    "customer_name": "Jane Doe",
-    "delivery_date": "2026-03-25",
-    "delivery_time": "10:00-12:00",
-    "shipping_method": "Standard Delivery",
-    "reserved": false
+    "id": "900100201",
+    "order_number": "OMA-1002",
+    "created_at": "2026-03-21T10:30:00Z",
+    "customer": { "first_name": "Jane", "last_name": "Doe" },
+    "shipping_lines": [{ "title": "Standard Delivery", "code": "STANDARD" }],
+    "note_attributes": [
+      { "name": "delivery_date", "value": "2026-03-25" },
+      { "name": "delivery_time", "value": "10:00-12:00" },
+      { "name": "specific_delivery_time", "value": "10:30 AM" },
+      { "name": "reserved", "value": "false" }
+    ],
+    "line_items": [
+      { "title": "Designer Cake - Anniversary" },
+      { "title": "Additional Customization Charges" }
+    ]
   }'
 ```
 
-Expected success response shape:
+#### 3) Verify generated print jobs (Electron polling)
 
-```json
-{
-  "success": true,
-  "order_id": "900100200",
-  "order_number": "OMA-1001",
-  "internal_order_id": 1,
-  "message": "Sample webhook processed"
-}
+```bash
+curl "http://localhost:3000/api/print-jobs/pending?machineId=local-machine-1&limit=50"
 ```
+
+The test webhook response includes:
+- created order IDs
+- required departments
+- generated PDF paths
+- queued print-job metadata
+
+If Electron is running and polling pending jobs, it should receive and print these jobs. In DB you should also see:
+- `orders` row created
+- `order_department_status` updated by rule evaluation
+- `order_pdfs` paths populated
+- `print_jobs` rows inserted
+- `order_timeline` events for webhook/rules/pdf/print flow
 
 ### Orders
 

@@ -62,7 +62,35 @@ async function handleSampleOrderWebhook(req, res, next) {
       order_id: result.shopifyOrderId,
       order_number: result.orderNumber,
       internal_order_id: result.internalOrderId,
-      message: "Sample webhook processed",
+      required_departments: result.requiredDepartments,
+      pdf_paths: result.pdfPaths,
+      print_jobs: result.printJobs,
+      message: "Sample webhook processed with PDF generation and print job trigger",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function handleTestOrderWebhook(req, res, next) {
+  try {
+    const signature = req.get("x-shopify-hmac-sha256");
+    const { rawBody, payload } = parseRawJsonBody(req);
+    const isValid = validateSampleWebhookSignature(rawBody, signature);
+    if (!isValid) {
+      throw new HttpError(401, "Invalid test webhook signature");
+    }
+
+    const result = await shopifyService.processTestOrderWebhook(payload);
+    res.status(201).json({
+      success: true,
+      order_id: result.shopifyOrderId,
+      order_number: result.orderNumber,
+      internal_order_id: result.internalOrderId,
+      required_departments: result.requiredDepartments,
+      pdf_paths: result.pdfPaths,
+      print_jobs: result.printJobs,
+      message: "Test webhook processed, PDFs generated, and print jobs triggered",
     });
   } catch (error) {
     next(error);
@@ -72,4 +100,5 @@ async function handleSampleOrderWebhook(req, res, next) {
 module.exports = {
   handleOrderCreatedWebhook,
   handleSampleOrderWebhook,
+  handleTestOrderWebhook,
 };

@@ -57,6 +57,30 @@ async function getPrintJobById(jobId, executor) {
   return rows[0] || null;
 }
 
+async function listJobsByOrderId(orderId, executor) {
+  const db = getExecutor(executor);
+  const [rows] = await db.query(
+    `
+      SELECT
+        id,
+        order_id,
+        department,
+        printer_id,
+        machine_id,
+        pdf_path,
+        job_status,
+        error_message,
+        requested_at,
+        completed_at
+      FROM print_jobs
+      WHERE order_id = ?
+      ORDER BY id ASC
+    `,
+    [orderId]
+  );
+  return rows;
+}
+
 async function updatePrintJobStatus(jobId, status, errorMessage, executor) {
   const db = getExecutor(executor);
   const completedAt = status === "SUCCESS" || status === "FAILED" || status === "CANCELLED" ? new Date() : null;
@@ -89,6 +113,7 @@ module.exports = {
   createPrintJob,
   listPendingJobs,
   getPrintJobById,
+  listJobsByOrderId,
   updatePrintJobStatus,
   cancelPendingJobsForOrder,
 };

@@ -10,5 +10,6 @@ router.post(
   express.raw({ type: "application/json" }),
   shopifyController.handleSampleOrderWebhook
 );
+router.post("/test-order-webhook", express.raw({ type: "application/json" }), shopifyController.handleTestOrderWebhook);
 
 module.exports = router;
