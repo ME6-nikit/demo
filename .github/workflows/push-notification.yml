@@ -24,20 +24,22 @@ jobs:
             exit 0
           fi
 
-          escaped_commit_message=$(printf '%s' "$COMMIT_MESSAGE" | sed 's/\\/\\\\/g; s/"/\\"/g')
+          payload=$(python3 - <<'PY'
+          import json
+          import os
 
-          payload=$(cat <<EOF
-          {
-            "text": "New push in ${REPOSITORY}",
-            "repository": "${REPOSITORY}",
-            "branch": "${BRANCH}",
-            "commitSha": "${COMMIT_SHA}",
-            "commitMessage": "${escaped_commit_message}",
-            "commitUrl": "${COMMIT_URL}",
-            "actor": "${ACTOR}",
-            "pushedAt": "${PUSHED_AT}"
+          payload = {
+              "text": f"New push in {os.environ['REPOSITORY']}",
+              "repository": os.environ["REPOSITORY"],
+              "branch": os.environ["BRANCH"],
+              "commitSha": os.environ["COMMIT_SHA"],
+              "commitMessage": os.environ.get("COMMIT_MESSAGE", ""),
+              "commitUrl": os.environ.get("COMMIT_URL", ""),
+              "actor": os.environ["ACTOR"],
+              "pushedAt": os.environ.get("PUSHED_AT", ""),
           }
-          EOF
+          print(json.dumps(payload))
+          PY
           )
 
           curl -sS -X POST \
