@@ -91,7 +91,8 @@ Status color mapping in API responses:
 
 ### Shopify webhook
 
-- `POST /api/shopify/webhook/order-created`
+- `POST /api/shopify/order-webhook` (spec-compatible sample endpoint)
+- `POST /api/shopify/webhook/order-created` (legacy alias)
   - Validates Shopify HMAC signature via `x-shopify-hmac-sha256`
   - Persists order + initializes statuses
   - Evaluates business rules

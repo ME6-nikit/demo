@@ -20,6 +20,7 @@ app.get("/health", (_req, res) => {
 
 // Keep raw body for Shopify signature verification.
 app.use("/api/shopify/webhook", shopifyRoutes);
+app.use("/api/shopify", shopifyRoutes);
 
 app.use(express.json({ limit: "5mb" }));
 
