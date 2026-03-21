@@ -34,6 +34,31 @@ Production-style Node.js backend for processing Shopify order webhooks, evaluati
    npm run dev
    ```
 
+## Push Notifications on Repository Push
+
+The repository includes a GitHub Actions workflow that sends a webhook notification for every `push` event.
+
+### Setup
+
+1. In GitHub, go to **Settings → Secrets and variables → Actions**.
+2. Add a repository secret named:
+
+   - `PUSH_NOTIFICATION_WEBHOOK_URL`
+
+3. Set its value to your destination webhook endpoint (for example: Slack, Discord, or a custom notification service).
+
+### Payload sent
+
+The workflow posts a JSON payload containing:
+
+- `repository`
+- `branch`
+- `commitSha`
+- `commitMessage`
+- `commitUrl`
+- `actor`
+- `pushedAt`
+
 Health endpoint:
 
 ```http

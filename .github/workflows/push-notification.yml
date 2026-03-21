@@ -1,0 +1,46 @@
+name: Push Notification
+
+on:
+  push:
+
+jobs:
+  notify:
+    name: Send push notification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send webhook notification
+        env:
+          WEBHOOK_URL: ${{ secrets.PUSH_NOTIFICATION_WEBHOOK_URL }}
+          REPOSITORY: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+          COMMIT_SHA: ${{ github.sha }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          COMMIT_URL: ${{ github.event.head_commit.url }}
+          ACTOR: ${{ github.actor }}
+          PUSHED_AT: ${{ github.event.head_commit.timestamp }}
+        run: |
+          if [ -z "$WEBHOOK_URL" ]; then
+            echo "PUSH_NOTIFICATION_WEBHOOK_URL is not set. Skipping notification."
+            exit 0
+          fi
+
+          escaped_commit_message=$(printf '%s' "$COMMIT_MESSAGE" | sed 's/\\/\\\\/g; s/"/\\"/g')
+
+          payload=$(cat <<EOF
+          {
+            "text": "New push in ${REPOSITORY}",
+            "repository": "${REPOSITORY}",
+            "branch": "${BRANCH}",
+            "commitSha": "${COMMIT_SHA}",
+            "commitMessage": "${escaped_commit_message}",
+            "commitUrl": "${COMMIT_URL}",
+            "actor": "${ACTOR}",
+            "pushedAt": "${PUSHED_AT}"
+          }
+          EOF
+          )
+
+          curl -sS -X POST \
+            -H "Content-Type: application/json" \
+            -d "$payload" \
+            "$WEBHOOK_URL"
