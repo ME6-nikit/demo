@@ -1,0 +1,62 @@
+name: Push Notification
+
+on:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send webhook notification
+        if: ${{ secrets.PUSH_NOTIFICATION_WEBHOOK_URL != '' }}
+        env:
+          PUSH_NOTIFICATION_WEBHOOK_URL: ${{ secrets.PUSH_NOTIFICATION_WEBHOOK_URL }}
+          REPOSITORY: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+          ACTOR: ${{ github.actor }}
+          SHA: ${{ github.sha }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          COMPARE_URL: ${{ github.event.compare }}
+          COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+        run: |
+          payload="$(python - <<'PY'
+          import json
+          import os
+
+          repository = os.environ["REPOSITORY"]
+          branch = os.environ["BRANCH"]
+          actor = os.environ["ACTOR"]
+          sha = os.environ["SHA"]
+          short_sha = sha[:7]
+          commit_message = os.environ.get("COMMIT_MESSAGE", "").strip() or "(no commit message)"
+          commit_url = os.environ["COMMIT_URL"]
+          compare_url = os.environ.get("COMPARE_URL", "")
+
+          payload = {
+              "event": "push",
+              "repository": repository,
+              "branch": branch,
+              "actor": actor,
+              "sha": sha,
+              "commit_url": commit_url,
+              "compare_url": compare_url,
+              "message": commit_message,
+              "text": f"[{repository}] New push on {branch} by {actor} ({short_sha}): {commit_message}"
+          }
+
+          print(json.dumps(payload))
+          PY
+          )"
+
+          curl --fail --silent --show-error \
+            -X POST \
+            -H "Content-Type: application/json" \
+            --data "$payload" \
+            "$PUSH_NOTIFICATION_WEBHOOK_URL"
+
+      - name: Webhook not configured
+        if: ${{ secrets.PUSH_NOTIFICATION_WEBHOOK_URL == '' }}
+        run: echo "Skipping push notification: PUSH_NOTIFICATION_WEBHOOK_URL is not configured."
