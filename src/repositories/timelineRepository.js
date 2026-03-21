@@ -44,7 +44,20 @@ async function listTimelineByOrderId(orderId, executor) {
     `,
     [orderId]
   );
-  return rows;
+  return rows.map((row) => {
+    let metadata = row.metadata;
+    if (typeof row.metadata === "string") {
+      try {
+        metadata = JSON.parse(row.metadata);
+      } catch (_error) {
+        metadata = row.metadata;
+      }
+    }
+    return {
+      ...row,
+      metadata,
+    };
+  });
 }
 
 module.exports = {

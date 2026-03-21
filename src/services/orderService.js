@@ -132,7 +132,11 @@ async function resolvePdfPath(identifier, departmentInput) {
   }
 
   const absolutePath = path.resolve(process.cwd(), pdfPath);
-  await fs.access(absolutePath);
+  try {
+    await fs.access(absolutePath);
+  } catch (_error) {
+    throw new HttpError(404, "PDF file not found on server storage");
+  }
   return {
     absolutePath,
     fileName: path.basename(absolutePath),

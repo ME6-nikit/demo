@@ -11,6 +11,7 @@ const pool = mysql.createPool({
   connectionLimit: env.db.connectionLimit,
   queueLimit: 0,
   timezone: "Z",
+  multipleStatements: true,
 });
 
 async function withTransaction(work) {
