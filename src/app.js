@@ -21,6 +21,8 @@ app.get("/health", (_req, res) => {
   });
 });
 
+// Raw body is required for Shopify HMAC signature verification.
+app.use("/api/webhooks/shopify", shopifyRoutes);
 app.use("/api/shopify/webhook", shopifyRoutes);
 app.use("/api/shopify", shopifyRoutes);
 
