@@ -128,6 +128,13 @@ async function resolvePdfPath(identifier, departmentInput) {
   const pdfColumn = pdfColumnForDepartment(department);
   const pdfPath = order[pdfColumn];
   if (!pdfPath) {
+    await timelineService.logTimelineEvent({
+      orderId: order.id,
+      eventType: "PDF_DOWNLOAD_FAILED",
+      status: "FAILED",
+      department,
+      message: `PDF download failed for ${department}: no PDF generated`,
+    });
     throw new HttpError(404, `No PDF generated for department ${department}`);
   }
 
@@ -135,8 +142,24 @@ async function resolvePdfPath(identifier, departmentInput) {
   try {
     await fs.access(absolutePath);
   } catch (_error) {
+    await timelineService.logTimelineEvent({
+      orderId: order.id,
+      eventType: "PDF_DOWNLOAD_FAILED",
+      status: "FAILED",
+      department,
+      message: `PDF download failed for ${department}: file not found on storage`,
+    });
     throw new HttpError(404, "PDF file not found on server storage");
   }
+
+  await timelineService.logTimelineEvent({
+    orderId: order.id,
+    eventType: "PDF_DOWNLOADED",
+    status: "SUCCESS",
+    department,
+    message: `PDF downloaded for ${department}`,
+  });
+
   return {
     absolutePath,
     fileName: path.basename(absolutePath),
