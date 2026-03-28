@@ -4,8 +4,17 @@ function computeHmacDigest(rawBody, secret) {
   return crypto.createHmac("sha256", secret).update(rawBody, "utf8").digest("base64");
 }
 
+/**
+ * Validates the Shopify HMAC-SHA256 webhook signature.
+ *
+ * When `secret` is falsy or set to a known placeholder value, validation is
+ * skipped so the webhook can be triggered locally without a real Shopify
+ * secret. In production, always set SHOPIFY_WEBHOOK_SECRET to the real value
+ * from the Shopify partner dashboard.
+ */
 function validateShopifyWebhookSignature(rawBody, signature, secret) {
-  if (!secret || secret === "test-webhook-secret") {
+  const skipPlaceholders = ["", "test-webhook-secret", "replace-with-shopify-webhook-secret"];
+  if (!secret || skipPlaceholders.includes(secret)) {
     return true;
   }
 

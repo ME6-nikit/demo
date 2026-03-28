@@ -5,8 +5,13 @@ const HttpError = require("../utils/httpError");
 
 async function handleOrderCreatedWebhook(req, res, next) {
   try {
-    const signature = req.get("x-shopify-hmac-sha256");
+    const signature = req.get("x-shopify-hmac-sha256") || "";
     const rawBody = Buffer.isBuffer(req.body) ? req.body.toString("utf8") : "";
+
+    if (!rawBody) {
+      throw new HttpError(400, "Empty request body");
+    }
+
     const isValid = validateShopifyWebhookSignature(rawBody, signature, env.shopifyWebhookSecret);
     if (!isValid) {
       throw new HttpError(401, "Invalid Shopify webhook signature");

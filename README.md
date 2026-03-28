@@ -1,289 +1,328 @@
-# Order Management Automation (OMA) — Backend
+# Order Management Automation (OMA) Backend
 
-A Node.js + Express backend for processing Shopify order webhooks, evaluating department print rules, generating per-department PDFs, managing printer assignments, dispatching print jobs, and tracking timeline events.
+Node.js backend for processing Shopify order webhooks, evaluating department print rules, generating per-department PDFs (DM, Confectionery, Design), and tracking timeline events.
 
 ## Tech Stack
 
-- **Runtime:** Node.js `>=18.0.0` (developed with 18.16.1)
-- **Framework:** Express 4.x
-- **Database:** MySQL 8.0
-- **PDF Generation:** PDFKit
+- **Runtime**: Node.js `18.16.1`
+- **Framework**: Express.js
+- **Database**: MySQL `8.0`
+- **PDF**: PDFKit
 
-## Quick Start (Local Development)
+## Prerequisites
 
-### 1. Start MySQL
+| Tool | Version |
+| ----- | ------- |
+| Node.js | 18.16.1 |
+| MySQL | 8.0+ |
 
-**Option A — Docker Compose (recommended):**
+## Local Setup (Step by Step)
+
+### 1. Clone & checkout the feature branch
 
 ```bash
-docker-compose up -d
+git clone https://github.com/ME6-nikit/demo.git
+cd demo
+git checkout node_order_management
 ```
 
-This starts a MySQL 8.0 container on port 3306 with:
-- Root password: `password`
-- Database: `oma` (auto-created)
+### 2. Create the MySQL database
 
-**Option B — Local MySQL 8.0 installation:**
+Start your local MySQL 8.0 server, then create the `oma` database:
 
-```sql
-CREATE DATABASE IF NOT EXISTS oma CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';
-FLUSH PRIVILEGES;
+```bash
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS oma CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 ```
 
-### 2. Configure Environment
+> **Tip**: If your root user has no password, drop the `-p` flag.
+
+### 3. Configure environment variables
 
 ```bash
 cp .env.example .env
 ```
 
-Default values in `.env.example` match the Docker Compose setup. No changes needed for local dev.
+Open `.env` and adjust `DB_USER`, `DB_PASSWORD`, `DB_HOST`, and `DB_PORT` to match your local MySQL installation. The defaults assume:
 
-Key environment variables:
+| Variable | Default |
+| -------- | ------- |
+| `DB_HOST` | `127.0.0.1` |
+| `DB_PORT` | `3306` |
+| `DB_USER` | `root` |
+| `DB_PASSWORD` | `password` |
+| `DB_NAME` | `oma` |
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `3000` | HTTP server port |
-| `DB_HOST` | `127.0.0.1` | MySQL host |
-| `DB_PORT` | `3306` | MySQL port |
-| `DB_USER` | `root` | MySQL user |
-| `DB_PASSWORD` | `password` | MySQL password |
-| `DB_NAME` | `oma` | Database name |
-| `SHOPIFY_WEBHOOK_SECRET` | `test-webhook-secret` | Set to `test-webhook-secret` to bypass HMAC in dev |
-| `PDF_STORAGE_DIR` | `storage/pdfs` | Where generated PDFs are stored |
-| `AUTO_TRIGGER_PRINT_JOBS` | `false` | Auto-create print jobs when webhook arrives |
-| `RUN_MIGRATIONS_ON_BOOT` | `true` | Run DB migrations on server start |
+The `SHOPIFY_WEBHOOK_SECRET` is set to a placeholder value; **signature validation is automatically skipped** when the placeholder is used, so local cURL testing works out of the box.
 
-### 3. Install & Run
+`AUTO_TRIGGER_PRINT_JOBS` is `false` by default so you can test webhook → DB → PDF without needing printers configured.
+
+### 4. Install dependencies
 
 ```bash
 npm install
-npm run dev
 ```
 
-The server will:
-1. Wait for the database connection (retries up to 15 times)
-2. Run migrations automatically (creates all tables)
-3. Start listening on `http://localhost:3000`
+### 5. Run database migrations
 
-### 4. Verify
+Migrations run automatically on server start (`RUN_MIGRATIONS_ON_BOOT=true`), but you can also run them manually:
+
+```bash
+npm run migrate
+```
+
+This creates the following tables:
+
+- `orders` — persisted Shopify order data
+- `order_department_status` — per-department print status (DM, Confectionery, Design)
+- `order_pdfs` — file paths for generated department PDFs
+- `order_timeline` — audit log of all events
+- `printers`, `department_printer_assignments`, `print_jobs` — printer/job management
+- `schema_migrations` — migration tracking
+
+### 6. Start the server
+
+```bash
+npm run dev    # with auto-reload (nodemon)
+# or
+npm start      # plain node
+```
+
+You should see:
+
+```
+OMA backend listening on port 3000
+```
+
+### 7. Verify health
 
 ```bash
 curl http://localhost:3000/health
 ```
 
+Expected response:
+
+```json
+{ "status": "ok", "service": "oma-backend" }
+```
+
 ---
 
-## Sample Curl: Shopify Webhook
+## Testing the Shopify Webhook Locally
 
-This simulates a Shopify order creation webhook with a realistic payload:
+### cURL — Post a Sample Shopify Order
+
+Copy and paste the command below to trigger the webhook endpoint. No code changes are needed.
 
 ```bash
-curl -X POST http://localhost:3000/api/shopify/order-webhook \
+curl -X POST http://localhost:3000/api/webhooks/shopify/order \
   -H "Content-Type: application/json" \
+  -H "X-Shopify-Hmac-Sha256: placeholder" \
   -d '{
-    "id": 5678901234,
+    "id": 5551234567890,
     "order_number": 1042,
     "name": "#1042",
-    "email": "john.doe@example.com",
-    "created_at": "2026-03-28T10:30:00+00:00",
-    "total_price": "89.95",
-    "currency": "USD",
-    "financial_status": "paid",
+    "created_at": "2026-03-28T10:30:00+05:30",
+    "email": "jane.doe@example.com",
     "customer": {
-      "id": 1234567890,
-      "first_name": "John",
-      "last_name": "Doe",
-      "email": "john.doe@example.com",
-      "phone": "+1234567890"
-    },
-    "shipping_address": {
-      "first_name": "John",
-      "last_name": "Doe",
-      "address1": "123 Main St",
-      "city": "New York",
-      "province": "NY",
-      "country": "US",
-      "zip": "10001"
+      "first_name": "Jane",
+      "last_name": "Doe"
     },
     "shipping_lines": [
-      { "title": "Standard Delivery", "price": "10.00" }
+      { "title": "Standard Delivery", "code": "STANDARD" }
+    ],
+    "note_attributes": [
+      { "name": "delivery_date", "value": "2026-04-02" },
+      { "name": "delivery_time", "value": "10:00 AM - 12:00 PM" },
+      { "name": "specific_delivery_time", "value": "11:00 AM" }
     ],
     "line_items": [
       {
-        "id": 111,
-        "title": "Chocolate Truffle Cake",
+        "title": "Chocolate Truffle Cake - 1kg",
         "quantity": 1,
-        "price": "45.00",
-        "sku": "CAKE-CHOC-001",
-        "variant_title": "8 inch",
-        "properties": [
-          { "name": "message", "value": "Happy Birthday!" },
-          { "name": "color", "value": "Dark Brown" }
-        ]
+        "price": "1250.00"
       },
       {
-        "id": 222,
-        "title": "Assorted Macarons Box",
+        "title": "Red Velvet Cupcakes (Box of 6)",
         "quantity": 2,
-        "price": "17.47",
-        "sku": "CONF-MAC-012",
-        "variant_title": "Box of 12"
+        "price": "650.00"
+      },
+      {
+        "title": "Custom Message Plaque",
+        "quantity": 1,
+        "price": "150.00"
       }
     ],
-    "note": "Please deliver before 3pm",
-    "note_attributes": [
-      { "name": "delivery_date", "value": "2026-03-30" },
-      { "name": "delivery_time", "value": "2:00 PM - 4:00 PM" },
-      { "name": "specific_delivery_time", "value": "3:00 PM" }
-    ],
-    "tags": ""
+    "tags": "",
+    "total_price": "2700.00",
+    "currency": "INR"
   }'
 ```
 
-**Expected response:**
+**Expected response** (HTTP 202):
+
 ```json
-{ "message": "Webhook accepted", "orderId": 1 }
+{
+  "message": "Webhook accepted",
+  "orderId": 1
+}
 ```
 
-This will:
-1. Validate the webhook signature (bypassed in dev mode)
-2. Store the order in the `orders` table
-3. Initialize department statuses (`DM`, `CONFECTIONERY`, `DESIGN`) to `PENDING`
-4. Generate 3 department-specific PDFs under `storage/pdfs/`
-5. Log timeline events (`WEBHOOK_RECEIVED`, `RULES_EVALUATED`, `PDF_GENERATED` × 3)
+You can also use the sample payload file:
+
+```bash
+curl -X POST http://localhost:3000/api/webhooks/shopify/order \
+  -H "Content-Type: application/json" \
+  -H "X-Shopify-Hmac-Sha256: placeholder" \
+  -d @docs/sample-webhook-payload.json
+```
+
+### What happens behind the scenes
+
+1. **Signature validation** — skipped when using the placeholder secret (local dev mode).
+2. **Order persisted** — row inserted into `orders` table.
+3. **Department statuses initialized** — `order_department_status` row created with `PENDING` for DM, Confectionery, and Design.
+4. **Rule engine evaluated** — determines which departments need PDFs.
+5. **PDFs generated** — one PDF per required department saved to `storage/pdfs/`.
+6. **Timeline logged** — events: `WEBHOOK_RECEIVED`, `RULES_EVALUATED`, `PDF_GENERATED` (×3).
+
+### Verify in MySQL
+
+```bash
+mysql -u root -p oma -e "SELECT id, order_id, order_number, customer_name FROM orders;"
+mysql -u root -p oma -e "SELECT * FROM order_department_status;"
+mysql -u root -p oma -e "SELECT * FROM order_pdfs;"
+mysql -u root -p oma -e "SELECT event_type, status, department, message FROM order_timeline ORDER BY id;"
+```
+
+### Verify generated PDFs
+
+```bash
+ls -la storage/pdfs/
+```
 
 ---
 
-## API Reference
+## Downloading a Department PDF
 
-### Health Check
+Use the download endpoint to retrieve a generated PDF:
 
+```bash
+# Download the DM department PDF for order with internal ID 1
+curl -o dm_order.pdf http://localhost:3000/api/orders/1/department/dm/download-pdf
+
+# Download the Confectionery department PDF
+curl -o confectionery_order.pdf http://localhost:3000/api/orders/1/department/confectionery/download-pdf
+
+# Download the Design department PDF
+curl -o design_order.pdf http://localhost:3000/api/orders/1/department/design/download-pdf
 ```
-GET /health
-```
 
-### Shopify Webhooks
+The `{orderId}` parameter accepts either the internal numeric ID or the Shopify order ID.
+The `{department}` parameter accepts: `dm`, `confectionery`, or `design` (case-insensitive).
+
+---
+
+## All API Endpoints
+
+### Shopify Webhook
 
 | Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/shopify/order-webhook` | Primary webhook endpoint |
+| ------ | ---- | ----------- |
+| `POST` | `/api/webhooks/shopify/order` | **Primary** — Receive Shopify order webhook |
+| `POST` | `/api/shopify/order-webhook` | Alias |
 | `POST` | `/api/shopify/webhook/order-created` | Legacy alias |
-
-Headers: `x-shopify-hmac-sha256` (required in production, bypassed when secret is `test-webhook-secret`)
 
 ### Orders
 
 | Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/orders` | List orders (filterable, paginated) |
+| ------ | ---- | ----------- |
+| `GET` | `/api/orders` | List orders (supports filters & pagination) |
 | `GET` | `/api/orders/:orderId` | Get single order with department statuses |
 | `GET` | `/api/orders/:orderId/timeline` | Get order timeline events |
-| `PATCH` | `/api/orders/:orderId/ignore` | Ignore/un-ignore an order |
+| `PATCH` | `/api/orders/:orderId/ignore` | Mark/unmark order as ignored |
 | `POST` | `/api/orders/:orderId/department/:department/retry` | Retry print for a department |
 | `GET` | `/api/orders/:orderId/department/:department/download-pdf` | Download department PDF |
-
-**Query parameters for `GET /api/orders`:**
-
-| Param | Example | Description |
-|-------|---------|-------------|
-| `view` | `action_required` (default) or `all` | Filter by actionable status |
-| `orderNo` | `1042` | Search by order number |
-| `orderDate` | `2026-03-28` | Filter by order date |
-| `deliveryDate` | `2026-03-30` | Filter by delivery date |
-| `deliverySlot` | `3:00 PM` | Filter by delivery time slot |
-| `page` | `1` | Page number |
-| `limit` | `25` | Results per page (max 100) |
 
 ### Printers
 
 | Method | Path | Description |
-|--------|------|-------------|
+| ------ | ---- | ----------- |
+| `GET` | `/api/printers` | List all printers |
+| `GET` | `/api/printers/assignments` | List department→printer assignments |
 | `POST` | `/api/printers/sync` | Sync printers from Electron app |
 | `POST` | `/api/printers/status` | Update printer status |
-| `GET` | `/api/printers` | List all printers |
 | `POST` | `/api/printers/assignments` | Assign printer to department |
-| `GET` | `/api/printers/assignments` | List department-printer assignments |
-
-**Sync printers body:**
-```json
-{
-  "machineId": "DESKTOP-ABC123",
-  "printers": [
-    { "printerId": "HP_LaserJet_Pro", "printerName": "HP LaserJet Pro M404", "status": "ONLINE" }
-  ]
-}
-```
 
 ### Print Jobs
 
 | Method | Path | Description |
-|--------|------|-------------|
+| ------ | ---- | ----------- |
 | `POST` | `/api/print-job` | Create a print job |
 | `GET` | `/api/print-jobs/pending` | List pending print jobs |
 | `POST` | `/api/print-jobs/:jobId/status` | Update print job status |
 
-**Create print job body:**
-```json
-{ "orderId": 1, "department": "DM" }
-```
+---
 
-**List pending jobs query:**
-```
-GET /api/print-jobs/pending?machineId=DESKTOP-ABC123&limit=50
-```
+## Database Schema
 
-**Update job status body:**
-```json
-{ "status": "SUCCESS", "message": "Print completed" }
-```
+Migration file: `src/db/migrations/001_init_schema.sql`
 
-Valid statuses: `PENDING`, `IN-PROGRESS`, `SUCCESS`, `FAILED`, `CANCELLED`
+### Core Tables
+
+**`orders`** — Shopify order data
+
+| Column | Type | Notes |
+| ------ | ---- | ----- |
+| `id` | BIGINT (PK) | Auto-increment |
+| `order_id` | VARCHAR(64) | Shopify order ID (unique) |
+| `order_number` | VARCHAR(64) | Display order number |
+| `customer_name` | VARCHAR(255) | |
+| `delivery_date` | DATE | |
+| `delivery_time` | VARCHAR(64) | |
+| `shipping_method` | VARCHAR(255) | |
+
+**`order_department_status`** — Per-department print status
+
+| Column | Type | Values |
+| ------ | ---- | ------ |
+| `order_id` | BIGINT (FK→orders.id) | |
+| `dm_status` | ENUM | `NA`, `PENDING`, `IN-PROGRESS`, `SUCCESS`, `FAILED` |
+| `confectionery_status` | ENUM | `NA`, `PENDING`, `IN-PROGRESS`, `SUCCESS`, `FAILED` |
+| `design_status` | ENUM | `NA`, `PENDING`, `IN-PROGRESS`, `SUCCESS`, `FAILED` |
+
+**`order_pdfs`** — Generated PDF file paths
+
+| Column | Type |
+| ------ | ---- |
+| `order_id` | BIGINT (FK→orders.id) |
+| `dm_pdf_path` | TEXT |
+| `confectionery_pdf_path` | TEXT |
+| `design_pdf_path` | TEXT |
+
+**`order_timeline`** — Audit trail
+
+| Column | Type |
+| ------ | ---- |
+| `id` | BIGINT (PK) |
+| `order_id` | BIGINT (FK→orders.id) |
+| `event_type` | VARCHAR(128) |
+| `status` | VARCHAR(64) |
+| `message` | TEXT |
+| `timestamp` | TIMESTAMP |
 
 ---
 
-## Full Local Test Flow
+## Department Status Model
 
-After starting the server, run these commands in order to exercise the full workflow:
+| Status | Color | Meaning |
+| ------ | ----- | ------- |
+| `NA` | Grey | Department not required for this order |
+| `PENDING` | Orange | Awaiting processing |
+| `IN-PROGRESS` | Blue | Print job in progress |
+| `SUCCESS` | Green | Print completed successfully |
+| `FAILED` | Red | Print failed |
 
-```bash
-# 1. Submit a Shopify webhook
-curl -s -X POST http://localhost:3000/api/shopify/order-webhook \
-  -H "Content-Type: application/json" \
-  -d '{"id":5678901234,"order_number":1042,"name":"#1042","email":"john@example.com","created_at":"2026-03-28T10:30:00Z","customer":{"first_name":"John","last_name":"Doe"},"shipping_lines":[{"title":"Standard Delivery"}],"line_items":[{"title":"Chocolate Cake","quantity":1,"price":"45.00","sku":"CAKE-001"}],"note_attributes":[{"name":"delivery_date","value":"2026-03-30"},{"name":"delivery_time","value":"2-4 PM"}],"tags":""}'
-
-# 2. View the order
-curl -s http://localhost:3000/api/orders/1 | python3 -m json.tool
-
-# 3. Sync printers from "Electron app"
-curl -s -X POST http://localhost:3000/api/printers/sync \
-  -H "Content-Type: application/json" \
-  -d '{"machineId":"DESKTOP-ABC123","printers":[{"printerId":"printer1","printerName":"Office Printer","status":"ONLINE"}]}'
-
-# 4. Assign printer to DM department
-curl -s -X POST http://localhost:3000/api/printers/assignments \
-  -H "Content-Type: application/json" \
-  -d '{"department":"DM","printerId":"printer1","machineId":"DESKTOP-ABC123"}'
-
-# 5. Create a print job for DM
-curl -s -X POST http://localhost:3000/api/print-job \
-  -H "Content-Type: application/json" \
-  -d '{"orderId":1,"department":"DM"}'
-
-# 6. Poll for pending jobs (Electron would do this)
-curl -s "http://localhost:3000/api/print-jobs/pending?machineId=DESKTOP-ABC123"
-
-# 7. Mark print job as successful
-curl -s -X POST http://localhost:3000/api/print-jobs/1/status \
-  -H "Content-Type: application/json" \
-  -d '{"status":"SUCCESS","message":"Printed OK"}'
-
-# 8. Download the DM PDF
-curl -s -o dm_order.pdf http://localhost:3000/api/orders/1/department/DM/download-pdf
-
-# 9. Check order timeline
-curl -s http://localhost:3000/api/orders/1/timeline | python3 -m json.tool
-```
+At webhook ingest time, all three department statuses are initialized to `PENDING` (or `NA` based on rule engine evaluation).
 
 ---
 
@@ -291,86 +330,36 @@ curl -s http://localhost:3000/api/orders/1/timeline | python3 -m json.tool
 
 ```
 src/
-├── app.js                         # Express app setup, middleware, route mounting
-├── server.js                      # Bootstrap: DB wait, migrations, listen
-├── config/
-│   └── env.js                     # Environment variable parsing
-├── constants/
-│   ├── departments.js             # DM, CONFECTIONERY, DESIGN
-│   └── statuses.js                # Status enums + color map
-├── controllers/
-│   ├── shopifyController.js       # Webhook HMAC validation + dispatch
-│   ├── orderController.js         # Order CRUD + PDF download
-│   ├── printerController.js       # Printer sync/status/assignment
-│   └── printJobController.js      # Print job CRUD
-├── db/
-│   ├── pool.js                    # MySQL connection pool + transaction helper
-│   ├── migrate.js                 # Migration runner
-│   └── migrations/
-│       └── 001_init_schema.sql    # Full schema
-├── middleware/
-│   ├── errorHandler.js            # Global error handler
-│   └── notFound.js                # 404 handler
-├── repositories/
-│   ├── orderRepository.js         # Order SQL queries
-│   ├── printerRepository.js       # Printer SQL queries
-│   ├── printJobRepository.js      # Print job SQL queries
-│   └── timelineRepository.js      # Timeline SQL queries
-├── routes/
-│   ├── shopifyRoutes.js
-│   ├── orderRoutes.js
-│   ├── printerRoutes.js
-│   └── printJobRoutes.js
-├── services/
-│   ├── shopifyService.js          # Webhook processing orchestrator
-│   ├── orderService.js            # Order business logic
-│   ├── pdfService.js              # PDF generation (PDFKit)
-│   ├── printerService.js          # Printer validation + management
-│   ├── printJobService.js         # Print job lifecycle
-│   ├── ruleEngineService.js       # Department selection rules
-│   └── timelineService.js         # Event logging
-└── utils/
-    ├── departmentUtils.js         # Department normalization helpers
-    ├── httpError.js               # Custom error class
-    ├── orderPresenter.js          # API response formatting
-    ├── shopifyOrderMapper.js      # Shopify payload → normalized order
-    └── shopifySignature.js        # HMAC-SHA256 verification
+  server.js           — Bootstrap: migrations + HTTP listener
+  app.js              — Express app: middleware, routes, error handling
+  config/
+    env.js            — Environment variable parsing
+  db/
+    pool.js           — MySQL connection pool
+    migrate.js        — Migration runner
+    migrations/       — SQL migration files
+  constants/
+    departments.js    — Department enum & list
+    statuses.js       — Status enums & color map
+  controllers/        — HTTP request/response layer
+  services/           — Business logic & workflows
+  repositories/       — Data access & SQL queries
+  middleware/         — Error handling, 404
+  routes/             — Express route definitions
+  utils/              — Helpers (HMAC, order mapper, presenter)
 ```
 
-## Data Model
+## Timeline Events
 
-### Tables
-
-| Table | Purpose |
-|-------|---------|
-| `orders` | Core order data from Shopify |
-| `order_department_status` | Per-order department statuses (DM, Confectionery, Design) |
-| `order_pdfs` | PDF file paths per department |
-| `printers` | Registered printers from Electron |
-| `department_printer_assignments` | Which printer handles which department |
-| `print_jobs` | Print job queue and status |
-| `order_timeline` | Audit log of all events |
-
-### Department Statuses
-
-| Status | Color | Meaning |
-|--------|-------|---------|
-| `NA` | Grey | Department not required for this order |
-| `PENDING` | Orange | Awaiting processing |
-| `IN-PROGRESS` | Blue | Print job dispatched |
-| `SUCCESS` | Green | Print completed |
-| `FAILED` | Red | Print or validation failed |
-
-### Rule Engine
-
-The rule engine evaluates each incoming order to determine which departments are required:
-
-- **All departments required:** Super extended delivery, additional customization charges, missing delivery info, or draft orders
-- **Designer cake subset:** Only `DESIGN` + `CONFECTIONERY` (configurable via `DESIGNER_CAKE_DEPARTMENTS`)
-- **Default:** All three departments
-
-### Timeline Events
-
-`WEBHOOK_RECEIVED` → `RULES_EVALUATED` → `PDF_GENERATED` (per dept) → `PRINT_TRIGGERED` (per dept) → `PRINT_RESULT` (per dept)
-
-Other events: `PRINTER_VALIDATION_FAILED`, `ORDER_IGNORED`, `ORDER_UNIGNORED`, `PRINT_BLOCKED`
+| Event | When |
+| ----- | ---- |
+| `WEBHOOK_RECEIVED` | Shopify webhook processed |
+| `RULES_EVALUATED` | Rule engine determined departments |
+| `PDF_GENERATED` | PDF created for a department |
+| `PDF_DOWNLOADED` | PDF successfully downloaded |
+| `PDF_DOWNLOAD_FAILED` | PDF download failed |
+| `PRINT_TRIGGERED` | Print job queued |
+| `PRINT_RESULT` | Print job completed/failed |
+| `PRINTER_VALIDATION_FAILED` | No valid printer for department |
+| `ORDER_IGNORED` | Order marked as ignored |
+| `ORDER_UNIGNORED` | Order un-ignored |
