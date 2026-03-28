@@ -14,7 +14,10 @@ function createSafeFileName(value) {
 
 function extractLineItems(rawPayload) {
   if (!rawPayload) return [];
-  const payload = typeof rawPayload === "string" ? JSON.parse(rawPayload) : rawPayload;
+  let payload = rawPayload;
+  if (typeof payload === "string") {
+    try { payload = JSON.parse(payload); } catch (_e) { return []; }
+  }
   return (payload.line_items || []).map((item) => ({
     title: item.title || item.name || "Unnamed Item",
     quantity: item.quantity || 1,
@@ -29,7 +32,7 @@ function formatCurrency(amount) {
   return parseFloat(amount || 0).toFixed(2);
 }
 
-function drawHeader(doc, department, order) {
+function drawHeader(doc, department) {
   doc.fontSize(18).font("Helvetica-Bold").text("ORDER MANAGEMENT AUTOMATION", { align: "center" });
   doc.moveDown(0.3);
 
@@ -44,7 +47,6 @@ function drawOrderInfo(doc, order) {
   const labelFont = "Helvetica-Bold";
   const valueFont = "Helvetica";
   const leftCol = 50;
-  const rightCol = 300;
 
   function drawField(x, label, value) {
     const y = doc.y;
@@ -78,6 +80,12 @@ function drawOrderInfo(doc, order) {
 function drawLineItemsTable(doc, lineItems) {
   doc.font("Helvetica-Bold").fontSize(12).text("Line Items");
   doc.moveDown(0.3);
+
+  if (lineItems.length === 0) {
+    doc.font("Helvetica-Oblique").fontSize(10).text("  No line items available.");
+    doc.moveDown(0.5);
+    return;
+  }
 
   const tableTop = doc.y;
   const col1 = 50;
@@ -173,20 +181,17 @@ async function generateDepartmentPdf(order, department) {
   const fileName = `${createSafeFileName(order.order_number)}_${department}_${Date.now()}.pdf`;
   const absolutePath = path.join(env.pdfStorageDir, fileName);
 
-  const rawPayload = order.raw_payload;
-  const lineItems = extractLineItems(rawPayload);
+  const lineItems = extractLineItems(order.raw_payload);
 
   await new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: 50, size: "A4" });
     const stream = fs.createWriteStream(absolutePath);
     doc.pipe(stream);
 
-    drawHeader(doc, department, order);
+    drawHeader(doc, department);
     drawOrderInfo(doc, order);
     drawDepartmentNotes(doc, department);
-    if (lineItems.length > 0) {
-      drawLineItemsTable(doc, lineItems);
-    }
+    drawLineItemsTable(doc, lineItems);
     drawFooter(doc);
 
     doc.end();
