@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");
 const morgan = require("morgan");
 const shopifyRoutes = require("./routes/shopifyRoutes");
 const orderRoutes = require("./routes/orderRoutes");
@@ -9,16 +10,17 @@ const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
 
+app.use(cors());
 app.use(morgan("combined"));
 
 app.get("/health", (_req, res) => {
   res.json({
     status: "ok",
     service: "oma-backend",
+    timestamp: new Date().toISOString(),
   });
 });
 
-// Keep raw body for Shopify signature verification.
 app.use("/api/shopify/webhook", shopifyRoutes);
 app.use("/api/shopify", shopifyRoutes);
 
