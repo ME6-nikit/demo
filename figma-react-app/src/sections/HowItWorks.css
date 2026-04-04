@@ -1,0 +1,148 @@
+/*
+ * How It Works Section Styles
+ * 
+ * TODO: Update values from Figma MCP using get_design_context
+ * on the HowItWorks frame in the design file.
+ */
+
+.how-it-works {
+  padding-top: var(--spacing-16);
+  padding-bottom: var(--spacing-16);
+  background-color: var(--bg-secondary);
+}
+
+.how-it-works__container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+/* Header */
+.how-it-works__header {
+  text-align: center;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.how-it-works__title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-4);
+}
+
+.how-it-works__description {
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-secondary);
+}
+
+/* Steps */
+.how-it-works__steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.how-it-works__step {
+  position: relative;
+  display: flex;
+  gap: var(--spacing-4);
+  align-items: flex-start;
+}
+
+.how-it-works__step-number {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary-600);
+  color: var(--color-neutral-0);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.how-it-works__step-content {
+  flex: 1;
+  padding-top: var(--spacing-2);
+}
+
+.how-it-works__step-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-2);
+}
+
+.how-it-works__step-description {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-secondary);
+}
+
+.how-it-works__step-connector {
+  display: none;
+}
+
+/* Tablet */
+@media (min-width: 768px) {
+  .how-it-works {
+    padding-top: var(--spacing-20);
+    padding-bottom: var(--spacing-20);
+  }
+  
+  .how-it-works__title {
+    font-size: var(--font-size-4xl);
+  }
+  
+  .how-it-works__steps {
+    flex-direction: row;
+    gap: var(--spacing-6);
+  }
+  
+  .how-it-works__step {
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .how-it-works__step-content {
+    padding-top: 0;
+  }
+  
+  .how-it-works__step-connector {
+    display: block;
+    position: absolute;
+    top: 24px;
+    left: calc(50% + 32px);
+    width: calc(100% - 64px);
+    height: 2px;
+    background: linear-gradient(90deg, var(--color-primary-600) 0%, var(--color-primary-300) 100%);
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .how-it-works {
+    padding-top: var(--spacing-24);
+    padding-bottom: var(--spacing-24);
+  }
+  
+  .how-it-works__step-number {
+    width: 64px;
+    height: 64px;
+    font-size: var(--font-size-xl);
+  }
+  
+  .how-it-works__step-connector {
+    top: 32px;
+    left: calc(50% + 40px);
+    width: calc(100% - 80px);
+  }
+}

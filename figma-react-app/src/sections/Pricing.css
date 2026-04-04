@@ -1,0 +1,166 @@
+/*
+ * Pricing Section Styles
+ * 
+ * TODO: Update values from Figma MCP using get_design_context
+ * on the Pricing frame in the design file.
+ */
+
+.pricing {
+  padding-top: var(--spacing-16);
+  padding-bottom: var(--spacing-16);
+  background-color: var(--bg-secondary);
+}
+
+.pricing__container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+/* Header */
+.pricing__header {
+  text-align: center;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.pricing__title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-4);
+}
+
+.pricing__description {
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-secondary);
+}
+
+/* Grid */
+.pricing__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-6);
+  align-items: stretch;
+}
+
+/* Card */
+.pricing__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.pricing__card--popular {
+  border: 2px solid var(--color-primary-600);
+}
+
+.pricing__badge {
+  position: absolute;
+  top: calc(-1 * var(--spacing-3));
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.pricing__card-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.pricing__plan-name {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.pricing__plan-description {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+/* Price */
+.pricing__price {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-1);
+}
+
+.pricing__price-value {
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.pricing__price-period {
+  font-size: var(--font-size-base);
+  color: var(--text-tertiary);
+}
+
+/* Features */
+.pricing__features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  flex: 1;
+}
+
+.pricing__feature {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.pricing__feature-icon {
+  flex-shrink: 0;
+  color: var(--color-success-500);
+}
+
+/* Tablet */
+@media (min-width: 768px) {
+  .pricing {
+    padding-top: var(--spacing-20);
+    padding-bottom: var(--spacing-20);
+  }
+  
+  .pricing__title {
+    font-size: var(--font-size-4xl);
+  }
+  
+  .pricing__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-8);
+  }
+  
+  .pricing__card:last-child {
+    grid-column: span 2;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .pricing {
+    padding-top: var(--spacing-24);
+    padding-bottom: var(--spacing-24);
+  }
+  
+  .pricing__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .pricing__card:last-child {
+    grid-column: auto;
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
