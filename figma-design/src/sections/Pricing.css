@@ -1,0 +1,149 @@
+.pricing {
+  padding: var(--space-16) 0;
+  background-color: var(--color-neutral-50);
+}
+
+.pricing__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+/* Header */
+.pricing__header {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.pricing__title {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  line-height: var(--leading-tight);
+  color: var(--color-neutral-900);
+  margin-bottom: var(--space-4);
+}
+
+.pricing__description {
+  font-size: var(--text-lg);
+  line-height: var(--leading-relaxed);
+  color: var(--color-neutral-600);
+}
+
+/* Grid */
+.pricing__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+  align-items: stretch;
+}
+
+/* Card */
+.pricing__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.pricing__badge {
+  position: absolute;
+  top: calc(-1 * var(--space-3));
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.pricing__card-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.pricing__plan-name {
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--color-neutral-900);
+}
+
+.pricing__plan-description {
+  font-size: var(--text-sm);
+  color: var(--color-neutral-600);
+}
+
+/* Price */
+.pricing__price {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+}
+
+.pricing__price-value {
+  font-size: var(--text-4xl);
+  font-weight: var(--font-bold);
+  color: var(--color-neutral-900);
+}
+
+.pricing__price-period {
+  font-size: var(--text-base);
+  color: var(--color-neutral-500);
+}
+
+/* Features */
+.pricing__features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex: 1;
+}
+
+.pricing__feature {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-neutral-700);
+}
+
+.pricing__feature svg {
+  flex-shrink: 0;
+  color: var(--color-success);
+}
+
+/* Tablet */
+@media (min-width: 768px) {
+  .pricing {
+    padding: var(--space-20) 0;
+  }
+
+  .pricing__title {
+    font-size: var(--text-4xl);
+  }
+
+  .pricing__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-8);
+  }
+
+  .pricing__card:last-child {
+    grid-column: span 2;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .pricing {
+    padding: var(--space-24) 0;
+  }
+
+  .pricing__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .pricing__card:last-child {
+    grid-column: auto;
+    max-width: none;
+    margin: 0;
+  }
+}

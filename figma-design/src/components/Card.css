@@ -1,0 +1,30 @@
+.card {
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+}
+
+.card--default {
+  background-color: var(--color-neutral-50);
+}
+
+.card--elevated {
+  background-color: var(--color-neutral-0);
+  box-shadow: var(--shadow-lg);
+}
+
+.card--outlined {
+  background-color: var(--color-neutral-0);
+  border: 1px solid var(--color-neutral-200);
+}
+
+.card--highlighted {
+  background-color: var(--color-neutral-0);
+  border: 2px solid var(--color-primary-600);
+  box-shadow: var(--shadow-xl);
+}
+
+@media (min-width: 768px) {
+  .card {
+    padding: var(--space-8);
+  }
+}

@@ -1,0 +1,122 @@
+.testimonials {
+  padding: var(--space-16) 0;
+  background-color: var(--color-neutral-0);
+}
+
+.testimonials__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+/* Header */
+.testimonials__header {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.testimonials__title {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  line-height: var(--leading-tight);
+  color: var(--color-neutral-900);
+  margin-bottom: var(--space-4);
+}
+
+.testimonials__description {
+  font-size: var(--text-lg);
+  line-height: var(--leading-relaxed);
+  color: var(--color-neutral-600);
+}
+
+/* Grid */
+.testimonials__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+}
+
+/* Card */
+.testimonials__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.testimonials__rating {
+  display: flex;
+  gap: var(--space-1);
+  color: var(--color-warning);
+}
+
+.testimonials__quote {
+  margin: 0;
+}
+
+.testimonials__quote p {
+  font-size: var(--text-lg);
+  line-height: var(--leading-relaxed);
+  color: var(--color-neutral-700);
+}
+
+/* Author */
+.testimonials__author {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: auto;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-neutral-200);
+}
+
+.testimonials__avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+}
+
+.testimonials__author-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.testimonials__name {
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  font-style: normal;
+  color: var(--color-neutral-900);
+}
+
+.testimonials__role {
+  font-size: var(--text-sm);
+  color: var(--color-neutral-500);
+}
+
+/* Tablet */
+@media (min-width: 768px) {
+  .testimonials {
+    padding: var(--space-20) 0;
+  }
+
+  .testimonials__title {
+    font-size: var(--text-4xl);
+  }
+
+  .testimonials__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-8);
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .testimonials {
+    padding: var(--space-24) 0;
+  }
+
+  .testimonials__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
