@@ -1,0 +1,158 @@
+/*
+ * Hero Section Styles
+ * 
+ * TODO: Update values from Figma MCP using get_design_context
+ * on the Hero frame in the design file.
+ */
+
+.hero {
+  padding-top: var(--spacing-16);
+  padding-bottom: var(--spacing-16);
+  background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+}
+
+.hero__container {
+  display: grid;
+  gap: var(--spacing-12);
+  align-items: center;
+}
+
+/* Content */
+.hero__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+  text-align: center;
+}
+
+.hero__title {
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-tight);
+  color: var(--text-primary);
+}
+
+.hero__description {
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-secondary);
+  max-width: 560px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Actions */
+.hero__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  justify-content: center;
+}
+
+/* Stats */
+.hero__stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--spacing-8);
+  padding-top: var(--spacing-6);
+  border-top: 1px solid var(--border-primary);
+  margin-top: var(--spacing-2);
+}
+
+.hero__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.hero__stat-value {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+.hero__stat-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+}
+
+/* Visual */
+.hero__visual {
+  display: flex;
+  justify-content: center;
+}
+
+.hero__image-wrapper {
+  position: relative;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-2xl);
+}
+
+.hero__image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Tablet */
+@media (min-width: 768px) {
+  .hero {
+    padding-top: var(--spacing-20);
+    padding-bottom: var(--spacing-20);
+  }
+  
+  .hero__title {
+    font-size: var(--font-size-5xl);
+  }
+  
+  .hero__actions {
+    flex-direction: row;
+  }
+  
+  .hero__stats {
+    gap: var(--spacing-12);
+  }
+  
+  .hero__stat-value {
+    font-size: var(--font-size-3xl);
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .hero {
+    padding-top: var(--spacing-24);
+    padding-bottom: var(--spacing-24);
+  }
+  
+  .hero__container {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-16);
+  }
+  
+  .hero__content {
+    text-align: left;
+    align-items: flex-start;
+  }
+  
+  .hero__title {
+    font-size: var(--font-size-6xl);
+  }
+  
+  .hero__description {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  
+  .hero__actions {
+    justify-content: flex-start;
+  }
+  
+  .hero__stats {
+    justify-content: flex-start;
+  }
+}

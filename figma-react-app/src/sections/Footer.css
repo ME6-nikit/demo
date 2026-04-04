@@ -1,0 +1,158 @@
+/*
+ * Footer Section Styles
+ * 
+ * TODO: Update values from Figma MCP using get_design_context
+ * on the Footer frame in the design file.
+ */
+
+.footer {
+  padding-top: var(--spacing-16);
+  padding-bottom: var(--spacing-8);
+  background-color: var(--color-neutral-900);
+  color: var(--color-neutral-300);
+}
+
+.footer__container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+/* Main */
+.footer__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-10);
+}
+
+/* Brand */
+.footer__brand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  max-width: 280px;
+}
+
+.footer__logo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.footer__logo-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.footer__logo-text {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-neutral-0);
+}
+
+.footer__tagline {
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-neutral-400);
+}
+
+/* Social */
+.footer__social {
+  display: flex;
+  gap: var(--spacing-4);
+}
+
+.footer__social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  color: var(--color-neutral-400);
+  transition: all var(--transition-fast);
+}
+
+.footer__social-link:hover {
+  color: var(--color-neutral-0);
+  background-color: var(--color-neutral-800);
+}
+
+/* Navigation */
+.footer__nav {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-8);
+}
+
+.footer__nav-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.footer__nav-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-neutral-0);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.footer__nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.footer__nav-link {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-400);
+  transition: color var(--transition-fast);
+}
+
+.footer__nav-link:hover {
+  color: var(--color-neutral-0);
+}
+
+/* Bottom */
+.footer__bottom {
+  padding-top: var(--spacing-8);
+  border-top: 1px solid var(--color-neutral-800);
+}
+
+.footer__copyright {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-500);
+  text-align: center;
+}
+
+/* Tablet */
+@media (min-width: 768px) {
+  .footer {
+    padding-top: var(--spacing-20);
+    padding-bottom: var(--spacing-10);
+  }
+  
+  .footer__main {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  
+  .footer__nav {
+    grid-template-columns: repeat(4, auto);
+    gap: var(--spacing-12);
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .footer {
+    padding-top: var(--spacing-24);
+    padding-bottom: var(--spacing-12);
+  }
+  
+  .footer__nav {
+    gap: var(--spacing-16);
+  }
+}

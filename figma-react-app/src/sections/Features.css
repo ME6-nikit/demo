@@ -1,0 +1,106 @@
+/*
+ * Features Section Styles
+ * 
+ * TODO: Update values from Figma MCP using get_design_context
+ * on the Features frame in the design file.
+ */
+
+.features {
+  padding-top: var(--spacing-16);
+  padding-bottom: var(--spacing-16);
+  background-color: var(--bg-primary);
+}
+
+.features__container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+/* Header */
+.features__header {
+  text-align: center;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.features__title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-4);
+}
+
+.features__description {
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-secondary);
+}
+
+/* Grid */
+.features__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-6);
+}
+
+/* Card */
+.features__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.features__card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-600);
+}
+
+.features__card-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.features__card-description {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-secondary);
+}
+
+/* Tablet */
+@media (min-width: 768px) {
+  .features {
+    padding-top: var(--spacing-20);
+    padding-bottom: var(--spacing-20);
+  }
+  
+  .features__title {
+    font-size: var(--font-size-4xl);
+  }
+  
+  .features__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-8);
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .features {
+    padding-top: var(--spacing-24);
+    padding-bottom: var(--spacing-24);
+  }
+  
+  .features__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

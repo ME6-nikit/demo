@@ -1,0 +1,95 @@
+/*
+ * CTA Section Styles
+ * 
+ * TODO: Update values from Figma MCP using get_design_context
+ * on the CTA frame in the design file.
+ */
+
+.cta {
+  padding-top: var(--spacing-16);
+  padding-bottom: var(--spacing-16);
+  background: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-primary-800) 100%);
+}
+
+.cta__container {
+  display: flex;
+  justify-content: center;
+}
+
+.cta__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-6);
+  text-align: center;
+  max-width: 720px;
+}
+
+.cta__title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  color: var(--color-neutral-0);
+}
+
+.cta__description {
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-primary-100);
+}
+
+.cta__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  width: 100%;
+  max-width: 320px;
+}
+
+.cta__actions .button--primary {
+  background-color: var(--color-neutral-0);
+  color: var(--color-primary-700);
+}
+
+.cta__actions .button--primary:hover:not(:disabled) {
+  background-color: var(--color-neutral-100);
+}
+
+.cta__actions .button--ghost {
+  color: var(--color-neutral-0);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.cta__actions .button--ghost:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Tablet */
+@media (min-width: 768px) {
+  .cta {
+    padding-top: var(--spacing-20);
+    padding-bottom: var(--spacing-20);
+  }
+  
+  .cta__title {
+    font-size: var(--font-size-4xl);
+  }
+  
+  .cta__actions {
+    flex-direction: row;
+    justify-content: center;
+    max-width: none;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .cta {
+    padding-top: var(--spacing-24);
+    padding-bottom: var(--spacing-24);
+  }
+  
+  .cta__title {
+    font-size: var(--font-size-5xl);
+  }
+}

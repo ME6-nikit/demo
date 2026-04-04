@@ -1,0 +1,162 @@
+/*
+ * Header Section Styles
+ * 
+ * TODO: Update values from Figma MCP using get_design_context
+ * on the Header frame in the design file.
+ */
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.header__container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 72px;
+  gap: var(--spacing-6);
+}
+
+/* Logo */
+.header__logo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  flex-shrink: 0;
+}
+
+.header__logo-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.header__logo-text {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+}
+
+/* Navigation */
+.header__nav {
+  display: none;
+}
+
+.header__nav-list {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.header__nav-link {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  transition: color var(--transition-fast);
+}
+
+.header__nav-link:hover {
+  color: var(--text-primary);
+}
+
+/* Actions */
+.header__actions {
+  display: none;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+/* Mobile Toggle */
+.header__mobile-toggle {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.header__mobile-toggle-bar {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background-color: var(--text-primary);
+  border-radius: 1px;
+  transition: transform var(--transition-fast);
+}
+
+/* Mobile Menu */
+.header__mobile-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--border-primary);
+  padding: var(--spacing-4);
+  box-shadow: var(--shadow-lg);
+}
+
+.header__mobile-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.header__mobile-nav-link {
+  display: block;
+  padding: var(--spacing-3) var(--spacing-4);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.header__mobile-nav-link:hover {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.header__mobile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-4);
+  padding-top: var(--spacing-4);
+  border-top: 1px solid var(--border-primary);
+}
+
+/* Tablet and up */
+@media (min-width: 768px) {
+  .header__nav {
+    display: block;
+  }
+  
+  .header__actions {
+    display: flex;
+  }
+  
+  .header__mobile-toggle,
+  .header__mobile-menu {
+    display: none;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .header__container {
+    height: 80px;
+  }
+  
+  .header__nav-list {
+    gap: var(--spacing-10);
+  }
+}

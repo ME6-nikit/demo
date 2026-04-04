@@ -1,0 +1,52 @@
+/*
+ * Badge Component Styles
+ * 
+ * TODO: Update values from Figma MCP using get_design_context
+ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-family-primary);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+/* Size Variants */
+.badge--sm {
+  padding: var(--spacing-1) var(--spacing-2);
+  font-size: var(--font-size-xs);
+}
+
+.badge--md {
+  padding: var(--spacing-1) var(--spacing-3);
+  font-size: var(--font-size-sm);
+}
+
+/* Color Variants */
+.badge--default {
+  background-color: var(--color-neutral-100);
+  color: var(--color-neutral-700);
+}
+
+.badge--primary {
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-700);
+}
+
+.badge--success {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: var(--color-success-600);
+}
+
+.badge--warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--color-warning-600);
+}
+
+.badge--error {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--color-error-600);
+}

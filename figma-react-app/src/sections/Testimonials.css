@@ -1,0 +1,126 @@
+/*
+ * Testimonials Section Styles
+ * 
+ * TODO: Update values from Figma MCP using get_design_context
+ * on the Testimonials frame in the design file.
+ */
+
+.testimonials {
+  padding-top: var(--spacing-16);
+  padding-bottom: var(--spacing-16);
+  background-color: var(--bg-primary);
+}
+
+.testimonials__container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+/* Header */
+.testimonials__header {
+  text-align: center;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.testimonials__title {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-4);
+}
+
+.testimonials__description {
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-secondary);
+}
+
+/* Grid */
+.testimonials__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-6);
+}
+
+/* Card */
+.testimonials__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.testimonials__quote {
+  margin: 0;
+}
+
+.testimonials__quote-text {
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-primary);
+  font-style: italic;
+}
+
+/* Author */
+.testimonials__author {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.testimonials__avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+}
+
+.testimonials__author-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.testimonials__author-name {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  font-style: normal;
+  color: var(--text-primary);
+}
+
+.testimonials__author-role {
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+}
+
+/* Tablet */
+@media (min-width: 768px) {
+  .testimonials {
+    padding-top: var(--spacing-20);
+    padding-bottom: var(--spacing-20);
+  }
+  
+  .testimonials__title {
+    font-size: var(--font-size-4xl);
+  }
+  
+  .testimonials__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-8);
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .testimonials {
+    padding-top: var(--spacing-24);
+    padding-bottom: var(--spacing-24);
+  }
+  
+  .testimonials__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
